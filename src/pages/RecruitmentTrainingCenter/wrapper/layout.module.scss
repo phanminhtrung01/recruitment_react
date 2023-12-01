@@ -1,0 +1,5 @@
+.overight-header {
+    margin-bottom: calc(
+        var(--height-header-home) + var(--height-header-enterprise) + 20px
+    );
+}

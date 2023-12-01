@@ -1,0 +1,58 @@
+.carousel {
+    width: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.next,
+.prev {
+    top: calc(50% - 20px);
+    position: absolute;
+    background: rgb(152, 233, 255);
+    border-radius: 30px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 18px;
+    z-index: 2;
+    opacity: 0.5;
+}
+
+.next {
+    right: 10px;
+}
+
+.prev {
+    left: 10px;
+    transform: scale(-1);
+}
+
+.image-carousel {
+    position: absolute;
+    width: inherit;
+    height: inherit;
+    object-fit: cover;
+}
+
+.refresh {
+    padding: 10px;
+    position: absolute;
+    background: rgba(38, 236, 243, 0.4);
+    border-radius: 10px;
+    width: 20px;
+    height: 20px;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}

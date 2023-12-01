@@ -1,0 +1,78 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+
+    .main {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 30px;
+        row-gap: 10px;
+
+        .header {
+            font-size: 20px;
+            font-weight: 700;
+            background-color: #feffd7;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            position: sticky;
+            top: 180px;
+            z-index: 100;
+            user-select: none;
+
+            &:hover {
+                cursor: pointer !important;
+            }
+        }
+
+        .list {
+            display: flex;
+            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 30px;
+            flex: 3;
+
+            .jobs {
+                display: flex;
+                flex-direction: column;
+                background-color: #f5f6e5;
+                padding: 20px;
+                flex-wrap: wrap;
+                border-radius: 10px;
+                box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px,
+                    rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+            }
+
+            .job-item {
+                padding: 10px;
+                border-radius: 5px;
+                background-color: #f5f6e5;
+                box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,
+                    rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+                user-select: none;
+
+                .name-job {
+                    font-size: 18px;
+                    font-weight: 550;
+                    user-select: text !important;
+                    cursor: text !important;
+                }
+            }
+
+            .job-item-wapper {
+                :hover {
+                    background-color: #e7e8be;
+                }
+            }
+        }
+
+        .filter {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+    }
+}

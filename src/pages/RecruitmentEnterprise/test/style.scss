@@ -1,0 +1,74 @@
+.test-page {
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+
+    h1 {
+        top: 0;
+        text-align: center;
+        color: #0022ff;
+        font-size: 30px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+
+    h2 {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+
+    .test-contract {
+        margin-bottom: 20px;
+        padding: 10px;
+        border: 1px solid #e0e0fd;
+        border-radius: 5px;
+        .test-position.contract {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 30px;
+            width: 100%;
+        }
+    }
+
+    .test-register {
+        margin-bottom: 20px;
+
+        .test-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 50px;
+            width: 100%;
+
+            .tests-info {
+                display: flex;
+                gap: 10px;
+                flex-direction: column;
+                padding: 15px;
+                border: 1px solid #e0e0fd;
+                border-radius: 5px;
+                flex: 1;
+                min-width: 500px;
+                margin-bottom: 20px;
+            }
+
+            .test-details {
+                padding: 5px;
+                border: 1px solid #e0e0fd;
+                border-radius: 5px;
+                flex: 3;
+                height: fit-content;
+                min-width: 550px;
+            }
+        }
+
+        .sdsdsd {
+            color: #ebe984;
+        }
+    }
+}

@@ -1,0 +1,144 @@
+$job-image: '../../access/img/png/job.jpg';
+
+.Navbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    height: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: #c1d3fd 0px 20px 35px -10px, #adc3f8 0px 10px 10px -5px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    background-repeat: repeat;
+    background: linear-gradient(
+            rgba(146, 146, 146, 0.5),
+            rgba(204, 247, 255, 0.5)
+        ),
+        url($job-image);
+    background-size: cover;
+}
+
+.Navbar > .nav-logo {
+    font-weight: 700;
+    font-size: 25px;
+    margin: 15px;
+    color: #00085d;
+    margin-right: auto;
+}
+
+.Navbar > .nav-items > a {
+    color: #ffffff;
+    font-size: 17px;
+    text-decoration: none;
+    margin: 15px;
+    position: relative;
+    opacity: 0.9;
+}
+
+.Navbar > .nav-items > a:hover {
+    opacity: 1;
+}
+
+.Navbar > .nav-items > a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -5px;
+    width: 0;
+    height: 2px;
+    // background: #ffffff;
+    background: #1e00ff;
+    transition: all 0.45s;
+}
+
+.Navbar > .nav-items > a:hover::before {
+    width: 100%;
+}
+
+.Navbar > .nav-toggle {
+    display: none;
+}
+
+@media (max-width: 1000px) {
+    .Navbar > .nav-items {
+        position: absolute;
+        top: var(--height-header-enterprise);
+        display: flex;
+        flex-direction: column;
+        background: #3b4da7;
+        left: 0;
+        width: 100%;
+        z-index: 9998;
+        transform: translateX(-100%);
+        transition: all 0.45s;
+    }
+
+    .Navbar > .nav-items > a::before {
+        background: transparent;
+    }
+
+    .Navbar > .nav-items.open {
+        transform: translateX(0);
+    }
+
+    .Navbar > .nav-toggle {
+        display: flex;
+        width: 50px;
+        height: 50px;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .nav-toggle > .bar {
+        position: relative;
+        width: 32px;
+        height: 2px;
+        background: #ffffff;
+        transition: all 0.45s ease-in-out;
+    }
+
+    .nav-toggle > .bar::before,
+    .nav-toggle > .bar::after {
+        content: '';
+        position: absolute;
+        height: 2px;
+        background: #ffffff;
+        border-radius: 2px;
+        transition: all 0.45s ease-in-out;
+    }
+
+    .nav-toggle > .bar::before {
+        width: 25px;
+        transform: translateY(-8px);
+        right: 0;
+    }
+
+    .nav-toggle > .bar::after {
+        width: 32px;
+        transform: translateY(8px);
+    }
+
+    .nav-toggle.open > .bar {
+        transform: translateX(-40px);
+        background: transparent;
+    }
+
+    .nav-toggle.open > .bar::before {
+        width: 32px;
+        transform: rotate(45deg) translate(26px, -26px);
+    }
+
+    .nav-toggle.open > .bar::after {
+        transform: rotate(-45deg) translate(26px, 26px);
+    }
+}
+
+.active {
+    margin-bottom: 10px;
+    border-bottom: 2px solid #000; /* Thay đổi màu và độ dày của thanh ngang tại đây */
+}

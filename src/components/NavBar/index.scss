@@ -1,0 +1,30 @@
+.auth {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.login-home {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    padding-right: 10px;
+
+    position: relative;
+
+    ::before {
+        content: '';
+        position: absolute;
+        top: 15%;
+        bottom: 15%;
+        right: 0;
+        border-left: 1px solid black;
+    }
+}
+
+.register-home {
+    margin-left: 10px;
+}

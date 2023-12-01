@@ -1,0 +1,33 @@
+.view-text {
+    height: auto;
+    width: 100%;
+    margin: 0;
+
+    .ql-snow {
+        border: none;
+    }
+    .ql-toolbar {
+        display: none;
+    }
+
+    .ql-container {
+        height: auto;
+
+        .ql-editor {
+            padding: 0;
+            height: auto;
+            line-height: 2;
+
+            ol li:not(.ql-direction-rtl),
+            ul li:not(.ql-direction-rtl) {
+                padding: 0;
+            }
+        }
+    }
+}
+
+.job-item-wapper {
+    :hover {
+        background-color: #e7e8be;
+    }
+}

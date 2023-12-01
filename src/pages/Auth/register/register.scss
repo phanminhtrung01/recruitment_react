@@ -1,0 +1,31 @@
+.register-header {
+    margin-bottom: calc(var(--height-header-home) + 20px);
+}
+
+.mySwiper {
+    width: 100%;
+    height: 100%;
+    margin-top: 10px;
+}
+
+.swiper-slide {
+    text-align: center;
+    font-size: 18px;
+    background-color: #faffb7;
+    /* Center slide text vertically */
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    span {
+        margin-bottom: 10px;
+    }
+}
+
+.register-main {
+    text-align: center;
+    color: #0022ff;
+    font-size: 30px;
+    font-weight: 600;
+}

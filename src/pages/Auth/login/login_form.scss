@@ -1,0 +1,77 @@
+.login-wrapper {
+    display: flex;
+    justify-content: space-between;
+    width: 300px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+    .title_form {
+        text-align: center;
+        padding-bottom: 10px;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    form {
+        width: 100%;
+        display: flex;
+        gap: 15px;
+        flex-direction: column;
+        .row {
+            // margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+
+            .form-group {
+                input[type='text'],
+                input[type='password'] {
+                    width: 100%;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                }
+
+                button[type='submit'] {
+                    width: 100%;
+                    padding: 10px;
+                    background-color: #007bff;
+                    color: #fff;
+                    border-radius: 5px;
+                    cursor: pointer;
+
+                    &:hover {
+                        background-color: #0056b3;
+                    }
+                }
+            }
+        }
+
+        .forget-password {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: #007bff;
+
+            &.register {
+                color: #28a745;
+
+                &:hover {
+                    color: #1e7e34;
+                }
+            }
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        .action_auth {
+            display: flex;
+            justify-content: space-between;
+        }
+    }
+}

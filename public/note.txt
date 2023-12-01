@@ -1,0 +1,644 @@
+ // const DocumentsAwaitingApproval = ({ split }) => {
+    //     function CrudGridRecord({ ...props }) {
+    //         const InputNoneBoderStyle = styled(Input)({
+    //             '&:before': {
+    //                 content: 'none',
+    //             },
+    //             '&:after': {
+    //                 content: 'none',
+    //             },
+    //             padding: 5,
+    //         });
+
+    //         const DatePickerNoneBoderStyle = styled(DatePicker)({
+    //             fieldset: {
+    //                 display: 'none',
+    //             },
+    //         });
+    //         const SelectNoneBoderStyle = styled(Select)({
+    //             width: '100%',
+    //             fieldset: {
+    //                 display: 'none',
+    //             },
+    //         });
+
+    //         const CustomToolbarContainer = styled(GridToolbarContainer)({
+    //             display: 'flex',
+    //             justifyContent: 'space-between',
+    //         });
+
+    //         const UploadButton = styled(Button)(({ theme }) => ({
+    //             color: theme.palette.primary,
+    //             backgroundColor: 'transparent',
+    //             padding: theme.spacing(0.5, 1),
+    //             '&:hover': {
+    //                 backgroundColor: 'rgba(25, 118, 210, 0.04)',
+    //             },
+    //         }));
+
+    //         const ClearButton = styled(Button)(({ theme }) => ({
+    //             color: theme.palette.error,
+    //             backgroundColor: 'transparent',
+    //             padding: theme.spacing(0.5, 1),
+    //             '&:hover': {
+    //                 backgroundColor: 'rgba(25, 118, 210, 0.04)',
+    //             },
+    //         }));
+
+    //         const AddButton = styled(Button)(({ theme }) => ({
+    //             color: theme.palette.success,
+    //             backgroundColor: 'transparent',
+    //             padding: theme.spacing(0.5, 1),
+    //             '&:hover': {
+    //                 backgroundColor: 'rgba(25, 118, 210, 0.04)',
+    //             },
+    //         }));
+
+    //         const GridToolbarQuickFilterStyle = styled(GridToolbarQuickFilter)({
+    //             '& .MuiInputBase-root:before': {
+    //                 borderBottom: 'none',
+    //             },
+
+    //             '& .MuiInputBase-root:hover:not(.Mui-disabled, .Mui-error):before':
+    //                 {
+    //                     borderBottom: '1px solid black',
+    //                 },
+    //         });
+
+    //         function CustomToolbar(props) {
+    //             const { setRows, setRowModesModel } = props;
+
+    //             const handleAddClick = () => {
+    //                 const id = randomId();
+    //                 setRows((oldRows) => [
+    //                     ...oldRows,
+    //                     { id, name: '', isNew: true },
+    //                 ]);
+
+    //                 setRowModesModel((oldModel) => ({
+    //                     ...oldModel,
+    //                     [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
+    //                 }));
+    //             };
+
+    //             return (
+    //                 <CustomToolbarContainer>
+    //                     <div
+    //                         style={{
+    //                             display: 'flex',
+    //                             alignItems: 'center',
+    //                             gap: 10,
+    //                         }}
+    //                     >
+    //                         <GridToolbarExport
+    //                             disabled={false}
+    //                             csvOptions={{
+    //                                 utf8WithBom: true,
+    //                                 fileName: 'test',
+    //                                 hideToolbar: true,
+    //                                 hideFooter: true,
+    //                             }}
+    //                             printOptions={{
+    //                                 utf8WithBom: true,
+    //                                 fileName: 'test',
+    //                                 hideToolbar: true,
+    //                                 hideFooter: true,
+    //                             }}
+    //                         />
+
+    //                         <UploadButton
+    //                             disabled={false}
+    //                             variant="text"
+    //                             component="label"
+    //                             startIcon={<CloudUploadOutlined />}
+    //                         >
+    //                             NHẬP
+    //                             <input
+    //                                 hidden
+    //                                 onChange={(event) => {}}
+    //                                 onClick={(event) => {
+    //                                     // setColumns(
+    //                                     //     data.data.columns.filter((column) =>
+    //                                     //         VISIBLE_FIELDS.includes(column.field),
+    //                                     //     ),
+    //                                     // );
+    //                                     // setRows(data.data.rows);
+    //                                 }}
+    //                             />
+    //                         </UploadButton>
+    //                     </div>
+    //                     <div>
+    //                         <AddButton
+    //                             disabled={false}
+    //                             variant="text"
+    //                             component="label"
+    //                             startIcon={<AddBoxOutlined />}
+    //                             onClick={handleAddClick}
+    //                         >
+    //                             THÊM CÂU HỎI
+    //                         </AddButton>
+    //                         <ClearButton
+    //                             disabled={false}
+    //                             variant="text"
+    //                             component="label"
+    //                             startIcon={<ClearAll />}
+    //                             onClick={(event) => {
+    //                                 setRows([]);
+    //                             }}
+    //                         >
+    //                             XÓA TẤT CẢ
+    //                         </ClearButton>
+    //                     </div>
+
+    //                     <GridToolbarQuickFilterStyle
+    //                         disabled={false}
+    //                         style={{ float: 'right' }}
+    //                         quickFilterParser={(searchInput) =>
+    //                             searchInput
+    //                                 .split(',')
+    //                                 .map((value) => value.trim())
+    //                         }
+    //                         quickFilterFormatter={(quickFilterValues) =>
+    //                             quickFilterValues.join(', ')
+    //                         }
+    //                         debounceMs={500}
+    //                     />
+    //                 </CustomToolbarContainer>
+    //             );
+    //         }
+
+    //         function CustomNoRowsOverlay({ text }) {
+    //             return (
+    //                 <GridOverlay>
+    //                     <div
+    //                         style={{
+    //                             fontSize: '1.3rem',
+    //                         }}
+    //                     >
+    //                         {text}
+    //                     </div>
+    //                 </GridOverlay>
+    //             );
+    //         }
+
+    //         function columns() {
+    //             const renderCell = (params) => {
+    //                 return (
+    //                     <div
+    //                         style={{
+    //                             whiteSpace: 'normal',
+    //                             overflowWrap: 'break-word',
+    //                             overflow: 'auto',
+    //                             paddingTop: '5px',
+    //                             minHeight: '50px',
+    //                         }}
+    //                     >
+    //                         {params.value}
+    //                     </div>
+    //                 );
+    //             };
+
+    //             const renderEditCellDate = (params) => (
+    //                 <DatePickerNoneBoderStyle
+    //                     value={dayjs(params.value)}
+    //                     onChange={(newValue) => {
+    //                         params.api.setEditCellValue({
+    //                             ...params,
+    //                             value: newValue.toDate(),
+    //                         });
+    //                     }}
+    //                     renderInput={(params) => <TextField {...params} />}
+    //                     format="DD/MM/YYYY"
+    //                 />
+    //             );
+
+    //             const valueFormatDate = (params) =>
+    //                 dayjs(params.value).format(DEFAULT_DATE_FORMAT);
+
+    //             const statusOptions = [
+    //                 'Chờ duyệt',
+    //                 'Đã duyệt',
+    //                 'Đang kiểm tra',
+    //                 'Phỏng vấn',
+    //                 'Nhận việc',
+    //             ];
+
+    //             return [
+    //                 {
+    //                     field: 'nameStudent',
+    //                     headerName: 'Ứng viên',
+    //                     flex: 1,
+    //                     //minWidth: 200,
+    //                     // editable: true,
+    //                     // renderEditCell: (params) => (
+    //                     //     <InputNoneBoderStyle placeholder="Nhập tên hợp đồng" />
+    //                     // ),
+    //                 },
+    //                 {
+    //                     field: 'dateApply',
+    //                     headerName: 'Ngày ứng tuyển',
+    //                     //minWidth: 100,
+    //                     flex: 1,
+    //                     type: 'date',
+    //                     //editable: true,
+    //                     // renderEditCell: renderEditCellDate,
+    //                     valueFormatter: valueFormatDate,
+    //                 },
+    //                 {
+    //                     field: 'contentCV',
+    //                     headerName: 'Lời giới thiệu',
+    //                     //minWidth: 200,
+    //                     flex: 1,
+    //                     //editable: true,
+    //                     renderCell: renderCell,
+    //                     // renderEditCell: renderEditCellDate,
+    //                     // valueFormatter: valueFormatDate,
+    //                 },
+    //                 {
+    //                     field: 'position',
+    //                     headerName: 'Vị trí ứng tuyển',
+    //                     minWidth: 150,
+    //                     flex: 1,
+    //                     // editable: true,
+    //                 },
+    //                 {
+    //                     field: 'salary',
+    //                     headerName: 'Mức lương',
+    //                     //minWidth: 100,
+    //                     flex: 1,
+    //                     type: 'number',
+    //                 },
+    //                 {
+    //                     field: 'status',
+    //                     headerName: 'Trạng thái',
+    //                     flex: 1,
+    //                     //minWidth: 100,
+    //                     editable: true,
+    //                     type: 'singleSelect',
+    //                     valueOptions: statusOptions,
+    //                     renderEditCell: (params) => {
+    //                         let availableOptions;
+    //                         if (params.value) {
+    //                             const currentValueIndex = statusOptions.indexOf(
+    //                                 params.value,
+    //                             );
+
+    //                             availableOptions =
+    //                                 statusOptions.slice(currentValueIndex);
+    //                         } else {
+    //                             availableOptions = statusOptions;
+    //                         }
+
+    //                         return (
+    //                             <SelectNoneBoderStyle
+    //                                 value={params.value}
+    //                                 onChange={(event) => {
+    //                                     params.api.setEditCellValue({
+    //                                         ...params,
+    //                                         value: event.target.value,
+    //                                     });
+    //                                 }}
+    //                             >
+    //                                 {availableOptions.map((option, index) => (
+    //                                     <MenuItem key={index} value={option}>
+    //                                         {option}
+    //                                     </MenuItem>
+    //                                 ))}
+    //                             </SelectNoneBoderStyle>
+    //                         );
+    //                     },
+    //                 },
+    //                 {
+    //                     field: 'actions',
+    //                     type: 'actions',
+    //                     headerName: 'Thao tác',
+    //                     flex: 1,
+    //                     //minWidth: 100,
+    //                     cellClassName: 'actions',
+    //                     getActions: ({ id }) => {
+    //                         const isInEditMode =
+    //                             rowModesModel[id]?.mode === GridRowModes.Edit;
+    //                         let actions;
+    //                         if (isInEditMode) {
+    //                             actions = [
+    //                                 <Tooltip title="Lưu">
+    //                                     <GridActionsCellItem
+    //                                         icon={<SaveIcon />}
+    //                                         label="Save"
+    //                                         sx={{
+    //                                             color: 'primary.main',
+    //                                         }}
+    //                                         onClick={handleSaveClick(id)}
+    //                                     />
+    //                                 </Tooltip>,
+    //                                 <Tooltip title="Hủy">
+    //                                     <GridActionsCellItem
+    //                                         icon={<CancelIcon />}
+    //                                         label="Cancel"
+    //                                         className="textPrimary"
+    //                                         onClick={handleCancelClick(id)}
+    //                                         color="inherit"
+    //                                     />
+    //                                 </Tooltip>,
+    //                             ];
+    //                         }
+
+    //                         actions = [
+    //                             <Tooltip title="Chỉnh sửa">
+    //                                 <GridActionsCellItem
+    //                                     icon={<EditIcon />}
+    //                                     label="edit"
+    //                                     onClick={handleEditClick(id)}
+    //                                     color="inherit"
+    //                                 />
+    //                             </Tooltip>,
+    //                             <Tooltip title="Xóa">
+    //                                 <GridActionsCellItem
+    //                                     icon={<DeleteIcon />}
+    //                                     label="delete"
+    //                                     onClick={handleDeleteClick(id)}
+    //                                     color="inherit"
+    //                                 />
+    //                             </Tooltip>,
+    //                         ];
+
+    //                         return [<Box>{actions}</Box>];
+    //                     },
+    //                 },
+    //             ];
+    //         }
+
+    //         const [rows, setRows] = useState(jobsApplyRef.current.slice(split));
+    //         const [rowModesModel, setRowModesModel] = useState({});
+
+    //         const handleRowEditStop = (params, event) => {
+    //             if (params.reason === GridRowEditStopReasons.rowFocusOut) {
+    //                 event.defaultMuiPrevented = true;
+    //             }
+    //         };
+
+    //         const handleEditClick = useCallback(
+    //             (id) => () => {
+    //                 setRowModesModel((prevRowModesModel) => ({
+    //                     ...prevRowModesModel,
+    //                     [id]: { mode: GridRowModes.Edit },
+    //                 }));
+    //             },
+    //             [],
+    //         );
+
+    //         const handleSaveClick = useCallback(
+    //             (id) => () => {
+    //                 setRowModesModel((prevRowModesModel) => ({
+    //                     ...prevRowModesModel,
+    //                     [id]: { mode: GridRowModes.View },
+    //                 }));
+    //             },
+    //             [],
+    //         );
+
+    //         const handleDeleteClick = useCallback(
+    //             (id) => () => {
+    //                 setRows((prevRows) =>
+    //                     prevRows.filter((row) => row.id !== id),
+    //                 );
+    //             },
+    //             [],
+    //         );
+
+    //         const handleCancelClick = useCallback(
+    //             (id) => () => {
+    //                 setRowModesModel((prevRowModesModel) => ({
+    //                     ...prevRowModesModel,
+    //                     [id]: {
+    //                         mode: GridRowModes.View,
+    //                         ignoreModifications: true,
+    //                     },
+    //                 }));
+
+    //                 setRows((prevRows) => {
+    //                     const editedRow = prevRows.find((row) => row.id === id);
+    //                     if (editedRow && editedRow.isNew) {
+    //                         return prevRows.filter((row) => row.id !== id);
+    //                     }
+    //                     return prevRows;
+    //                 });
+    //             },
+    //             [],
+    //         );
+
+    //         const processRowUpdate = (newRow) => {
+    //             // console.log('processRowUpdate', newRow);
+
+    //             const updatedRow = { ...newRow, isNew: false };
+    //             setRows(
+    //                 rows.map((row) =>
+    //                     row.id === newRow.id ? updatedRow : row,
+    //                 ),
+    //             );
+
+    //             jobsApplyRef.current = rows.map((row) =>
+    //                 row.id === newRow.id ? updatedRow : row,
+    //             );
+
+    //             return updatedRow;
+    //         };
+
+    //         const handleRowModesModelChange = (newRowModesModel) => {
+    //             setRowModesModel(newRowModesModel);
+    //         };
+
+    //         const handleCellDoubleClick = (params, event) => {
+    //             event.defaultMuiPrevented = true;
+    //         };
+
+    //         useEffect(() => {
+    //             if (!rows[rows.length - 1]?.isNew) {
+    //             }
+    //         }, [rows]);
+
+    //         return (
+    //             <div
+    //                 style={{
+    //                     height: '300px',
+    //                 }}
+    //             >
+    //                 <DataGrid
+    //                     {...props}
+    //                     rows={rows}
+    //                     columns={columns()}
+    //                     autoHeight
+    //                     getRowHeight={() => 'auto'}
+    //                     editMode="row"
+    //                     onCellDoubleClick={handleCellDoubleClick}
+    //                     rowModesModel={rowModesModel}
+    //                     onRowModesModelChange={handleRowModesModelChange}
+    //                     onRowEditStop={handleRowEditStop}
+    //                     processRowUpdate={processRowUpdate}
+    //                     pageSize={rows.length}
+    //                     hideFooter={true}
+    //                     disableColumnFilter
+    //                     disableColumnSelector
+    //                     disableDensitySelector
+    //                     columnVisibilityModel={{
+    //                         id: false,
+    //                     }}
+    //                     slots={{
+    //                         toolbar: CustomToolbar,
+    //                         noRowsOverlay: () => (
+    //                             <CustomNoRowsOverlay text="Không có hợp đồng!" />
+    //                         ),
+    //                         //pagination: CustomPagination,
+    //                     }}
+    //                     slotProps={{
+    //                         toolbar: {
+    //                             setRows,
+    //                             setRowModesModel,
+    //                             showQuickFilter: true,
+    //                         },
+    //                     }}
+    //                 />
+    //             </div>
+    //         );
+    //     }
+
+    //     return (
+    //         <Box sx={{ height: 400, width: 1 }}>
+    //             <CrudGridRecord />
+    //             <h1>AAAAAAAA</h1>
+    //         </Box>
+    //     );
+    // };
+
+    // const panel = {
+    //     titles: ['Hồ sơ ứng tuyển', 'Hồ sơ đã lưu', 'Hồ sơ đã xóa'],
+    //     children: [
+    //         <DocumentsAwaitingApproval split={0} />,
+    //         <DocumentsAwaitingApproval split={2} />,
+    //         <DocumentsAwaitingApproval split={1} />,
+    //     ],
+    // };
+
+
+
+
+    // @JsonView(JsonViewCustom.Private.class)
+        // 	private String jobApplyId;
+        // 	@JsonView(JsonViewCustom.Public.class)
+        // 	private byte[] contentCv;
+        // 	@JsonView(JsonViewCustom.Public.class)
+        // 	private String introduce;
+        // 	@JsonFormat(pattern = "dd/MM/yyyy")
+        // 	@JsonView(JsonViewCustom.Public.class)
+        // 	private LocalDate dateApply;
+        // 	@JsonView(JsonViewCustom.Public.class)
+        // 	private String status;
+        // 	@JsonView(JsonViewCustom.Transient.class)
+        // 	private String studentID;
+        // 	@JsonView(JsonViewCustom.Transient.class)
+        // 	private String postID;
+        // 	@JsonView(JsonViewCustom.Private.class)
+        // 	private Student student;
+        // 	@JsonView(JsonViewCustom.Private.class)
+        // 	private PostApply postApply;
+
+        //     @Id
+        // @Column(name = "student_id", nullable = false, length = 10)
+        // private String studentId;
+
+        // @Column(name = "name", nullable = false, length = 50)
+        // private String name;
+
+        // @Column(name = "gender", length = 30)
+        // private String gender;
+
+        // @JsonFormat(pattern = "dd/MM/yyyy")
+        // @Column(name = "date_of_birth", nullable = false)
+        // private LocalDate dateOfBirth;
+
+        // @Column(name = "address", length = 100)
+        // private String address;
+
+        // @Column(name = "phone", nullable = false, length = 10)
+        // private String phone;
+
+        // @Column(name = "email", nullable = false, length = 50)
+        // private String email;
+
+        //  @Id
+        // @Column(name = "post_apply_id", nullable = false, length = 10)
+        // private String postApplyId;
+
+        // @Column(name = "name_job", nullable = false, length = 100)
+        // private String nameJob;
+
+        // @JsonFormat(pattern = "dd/MM/yyyy")
+        // @Column(name = "date_post")
+        // private LocalDate datePost;
+
+        // @JsonFormat(pattern = "dd/MM/yyyy")
+        // @Column(name = "date_expire")
+        // private LocalDate dateExpire;
+
+        // @Column(name = "viewed", nullable = false)
+        // private Integer viewed;
+
+        // @Column(name = "submitted")
+        // private Integer submitted;
+
+        // @Column(name = "gender", length = 30)
+        // private String gender;
+
+        // @Column(name = "age", length = 30)
+        // private String age;
+
+        // @Column(name = "work_address", nullable = false, length = 100)
+        // private String workAddress;
+
+        // @Column(name = "salary", nullable = false)
+        // private String salary;
+
+        // @Column(name = "description", nullable = false)
+        // private String description;
+
+        // @Column(name = "required", nullable = false)
+        // private String required;
+
+        // @Column(name = "status", nullable = false)
+        // private String status;
+
+
+ const newRows = rows.map((row) => {
+                if (row.jobApplyId === newRow.jobApplyId) {
+                    const { name, nameJob, salary, ...rewPre } = updatedRow;
+                    const { student, post } = updatedRow;
+                    const newStudent = { ...student, name: name };
+
+                    if (name && nameJob && salary) {
+                        const newPost = {
+                            ...post,
+                            nameJob: nameJob,
+                            salary: salary,
+                        };
+
+                        const newUpdatedRow = {
+                            ...rewPre,
+                            student: newStudent,
+                            post: newPost,
+                        };
+
+                        return newUpdatedRow;
+                    } else {
+                        return updatedRow;
+                    }
+                } else {
+                    const selectRows = apiRef.current.getSelectedRows();
+                    const keys = selectRows.keys();
+                    const keysArr = Array.from(keys);
+                    if (keysArr.includes(row.jobApplyId)) {
+                        return updatedRow;
+                    }
+
+                    return row;
+                }
+            });

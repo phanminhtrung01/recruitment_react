@@ -1,0 +1,41 @@
+.post-page {
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+
+    h1 {
+        top: 0;
+        text-align: center;
+        color: #0022ff;
+        font-size: 30px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+}
+
+.quill {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    height: 200px;
+    margin: 8px;
+
+    .ql-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        height: 45%;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        overflow: auto;
+    }
+
+    .ql-container {
+        height: 55%;
+    }
+}

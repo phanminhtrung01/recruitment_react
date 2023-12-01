@@ -1,0 +1,157 @@
+/* LoginPage.scss */
+$login-image: '../../../access/img/png/login.png';
+
+.row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.box-info-signup {
+    width: 60%;
+    padding: 20px;
+    background-color: #fcffd2;
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 14px,
+        rgba(0, 0, 0, 0.3) 0px 7px 13px -3px,
+        rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+    border-radius: 5px;
+}
+
+.title {
+    margin-bottom: 20px;
+}
+
+.title h2 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #0703ff;
+}
+
+.step-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.main-step-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+}
+
+.text-sup {
+    font-size: 14px;
+    color: #999;
+}
+
+.support {
+    color: #000;
+    text-decoration: none;
+}
+
+.support:hover {
+    text-decoration: underline;
+}
+
+.main-form {
+    margin-top: 20px;
+}
+
+.main-form form {
+    width: 100%;
+    height: auto;
+}
+
+.form-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.form-info {
+    width: 30%;
+}
+
+.form-info span {
+    font-size: 16px;
+    color: #333;
+}
+
+.form-input {
+    width: 70%;
+}
+
+.form-input input {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 4px;
+}
+
+.form-input input:focus {
+    outline: none;
+    border-color: #000;
+}
+
+.form-error {
+    color: red;
+    font-size: 14px;
+}
+
+.user-action {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.user-action a {
+    font-size: 14px;
+    color: #635d8a;
+    text-decoration: none;
+    transition-duration: 0.4s;
+}
+
+.user-action a:hover {
+    text-decoration: underline;
+    color: #16029c;
+}
+
+.user-action .btn-area {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.user-action .btn-action {
+    background-color: #5b91ff;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.user-action .btn-action:hover {
+    background-color: #0004ff;
+}
+
+.register {
+    color: #000;
+    text-decoration: none;
+}
+
+.register:hover {
+    text-decoration: underline;
+}
+
+.action-login {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}

@@ -1,0 +1,59 @@
+.recruitment {
+    .converter {
+        display: flex;
+        align-items: center;
+    }
+
+    .navbar {
+        z-index: 99;
+    }
+}
+
+.recruiment-container {
+    position: fixed;
+    top: var(--height-header-home);
+    left: 0;
+    right: 0;
+    z-index: 999;
+    height: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: rgb(215, 227, 255);
+
+    h2 {
+        margin: 10px;
+        font-size: 20px;
+        position: relative;
+    }
+
+    h2:hover {
+        cursor: pointer;
+    }
+
+    h2::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0;
+        height: 5px;
+        background: linear-gradient(to left, #003ea9 38%, #76a6ff 100%);
+        transition: all 0.3s;
+    }
+
+    h2:hover::before {
+        width: 100%;
+    }
+
+    .navigation {
+        font-size: 16px;
+    }
+
+    .icon-converter {
+        height: 30px;
+        width: 30px;
+    }
+}

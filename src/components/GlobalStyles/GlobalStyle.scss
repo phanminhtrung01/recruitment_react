@@ -1,0 +1,52 @@
+@import 'normalize.css';
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;1,100;1,300;1,400;1,500;1,700&display=swap');
+
+:root {
+    --primary: #fffb00;
+    --text-color: #333;
+    --font-size-text-normal: 16px;
+    --height-header-home: 80px;
+    --height-header-enterprise: 50px;
+    --height-header-navigation: 50px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 62.5%;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.6rem;
+    line-height: 1.5;
+    text-rendering: optimizeSpeed;
+    overflow-x: hidden;
+    overflow-y: auto;
+    font-family: 'Montserrat', sans-serif;
+    // background-color: #faffb7;
+    background-color: #fdffe2;
+    -ms-overflow-style: none; /* cho Internet Explorer, Edge */
+    scrollbar-width: none; /* cho Firefox */
+    overflow-y: scroll;
+}
+
+button,
+input,
+[tabindex] {
+    outline: none;
+    border: none;
+}
+
+a[href] {
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+body::-webkit-scrollbar {
+    display: none; /* cho Chrome, Safari, and Opera */
+}

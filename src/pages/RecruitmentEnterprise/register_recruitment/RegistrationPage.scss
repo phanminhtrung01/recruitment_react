@@ -1,0 +1,141 @@
+.registration-page {
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+
+    h1 {
+        top: 0;
+        text-align: center;
+        color: #0022ff;
+        font-size: 30px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    .registration-container {
+        display: flex;
+        z-index: 1;
+        gap: 25px;
+        flex-wrap: wrap;
+        width: 100%;
+
+        .registration-edit {
+            padding: 10px;
+            border: 1px solid #e0e0fd;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            width: 48%;
+            min-width: 500px;
+
+            .register-contract {
+                h5 {
+                    margin-bottom: 10px;
+                }
+                border: 1px solid #e0e0fd;
+                border-radius: 5px;
+                padding: 10px;
+                display: flex;
+
+                flex-direction: column;
+
+                .select-position {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                    width: 100%;
+                }
+
+                .div-add-position {
+                    width: 100%;
+                    justify-content: end;
+                }
+
+                // .check-box-selection {
+                //     display: flex;
+                //     flex-direction: column;
+                // }
+            }
+
+            .div-submit {
+                width: 100%;
+                display: flex;
+                justify-content: end;
+            }
+        }
+
+        .registration-review {
+            width: 48%;
+            min-width: 500px;
+            border: 1px solid #e0e0fd;
+            border-radius: 5px;
+            padding: 10px;
+
+            user-select: none;
+
+            h2 {
+                margin-bottom: 20px;
+            }
+
+            .review-time {
+                display: flex;
+                justify-content: space-evenly;
+                gap: 20px;
+                width: 100%;
+                margin-bottom: 20px;
+
+                .time-box {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    flex-direction: row;
+                }
+            }
+        }
+
+        .success {
+            // border: 1px solid rgb(0, 255, 60);
+            border: 1px solid #e0e0fd;
+            border-radius: 5px;
+            box-shadow: rgba(21, 255, 0, 0.35) 0px 5px 15px;
+        }
+        .failure {
+            // border: 1px solid rgb(255, 0, 0);
+            border: 1px solid #e0e0fd;
+            border-radius: 5px;
+            box-shadow: rgba(255, 0, 0, 0.35) 0px 5px 15px;
+        }
+    }
+}
+
+// {
+//         background-color: #fcffd2;
+//     box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 14px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+//     border-radius: 5px;
+// }
+
+.btn-submit {
+    background-color: #f9f8b6;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    margin-top: 20px;
+    width: 120px;
+    border-radius: 10px;
+    cursor: pointer;
+
+    &:disabled {
+        background: #9ecbfb;
+        color: #7d7d7d;
+    }
+}

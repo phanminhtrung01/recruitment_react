@@ -1,0 +1,114 @@
+// register2.module.scss
+
+.row {
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+}
+
+.box-info-signup {
+    padding: 20px;
+    width: 80%;
+    margin: 0 auto;
+    background-color: #fcffd2;
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 14px,
+        rgba(0, 0, 0, 0.3) 0px 7px 13px -3px,
+        rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+    border-radius: 5px;
+}
+
+.step-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.main-step-title {
+    h3 {
+        font-size: 20px;
+        color: #333;
+        margin: 10px 0;
+    }
+}
+
+.text-sup {
+    text-align: center;
+    a {
+        font-size: 14px;
+        text-decoration: none;
+        color: #007bff;
+    }
+}
+
+.form-group {
+    margin-bottom: 15px;
+
+    &.d-flex {
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
+.form-info {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.form-input {
+    width: 60%;
+
+    input,
+    textarea {
+        width: 100%;
+        height: 100px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        overflow-y: auto;
+        resize: none;
+    }
+
+    input {
+        height: 35px;
+    }
+
+    textarea {
+        min-height: 60px;
+    }
+}
+
+.user-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.action-login {
+    display: flex;
+    justify-content: center;
+    a {
+        margin: 0 10px;
+    }
+}
+
+.btn-action {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+// Add more styles as needed
+
+@media (max-width: 768px) {
+    .box-info-signup {
+        max-width: 100%;
+    }
+}

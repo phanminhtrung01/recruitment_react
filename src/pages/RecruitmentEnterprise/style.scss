@@ -1,0 +1,23 @@
+.slide {
+    z-index: 1;
+}
+
+.grid-partner {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-gap: 1px;
+    justify-content: center;
+    padding: 10px;
+}
+
+.item-partner {
+    height: 100px;
+    width: 200px;
+    padding: 10px;
+    border: 2px solid #317972;
+    background-color: #c6e5ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    object-fit: contain;
+}
