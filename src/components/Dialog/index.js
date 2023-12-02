@@ -37,7 +37,7 @@ function AlertDialogModal(props) {
         oneButton = false,
     } = props;
 
-    const [activeButtonIn, setActiveButtonIn] = useState(activeButton);
+    const [nested, setNested] = useState(false);
 
     const [open, setOpen] = openDialog;
 
@@ -52,81 +52,98 @@ function AlertDialogModal(props) {
         message = messageSuccess;
     }
 
-    return (
-        <Dialog
-            TransitionComponent={Transition}
-            fullWidth
-            hideBackdrop
-            maxWidth={maxWidth}
-            keepMounted
-            disableScrollLock
-            open={open}
-            onClose={() => setOpen(false)}
-        >
-            <DialogTitle
-                color={color}
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5,
-                }}
-            >
-                {icon}
-                <div
-                    style={{
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                    }}
-                >
-                    {headerTitle}
-                </div>
-            </DialogTitle>
-            <Divider />
-            <DialogContent>{content}</DialogContent>
-            <DialogActions>
-                <Button
-                    style={{
-                        display: oneButton ? 'none' : 'block',
-                    }}
-                    variant="outlined"
-                    color="secondary"
-                    onClick={() => {
-                        if (onButtonClick) {
-                            onButtonClick('cancel');
-                        }
+    const handleCloseNested = (e) => {
+        setNested(false);
+    };
 
-                        setOpen(false);
+    const handleOpenNested = (e) => {
+        setNested(true);
+    };
+
+    return (
+        <div>
+            <Button onClick={handleOpenNested}>Đóng</Button>
+            <Dialog
+                TransitionComponent={Transition}
+                fullWidth
+                hideBackdrop
+                maxWidth={maxWidth}
+                keepMounted
+                disableScrollLock
+                open={!oneButton ? open : nested}
+                onClose={() => setOpen(false)}
+            >
+                <DialogTitle
+                    color={color}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
                     }}
                 >
+                    {icon}
                     <div
                         style={{
+                            fontSize: 14,
                             fontWeight: 'bold',
                         }}
                     >
-                        Hủy
+                        {headerTitle}
                     </div>
-                </Button>
-                <Button
-                    disabled={activeButtonIn}
-                    variant="contained"
-                    color={status}
-                    onClick={() => {
-                        if (onButtonClick) {
-                            onButtonClick('agree');
-                        }
-                        setOpen(false);
-                    }}
-                >
-                    <div
+                </DialogTitle>
+                <Divider />
+                <DialogContent>{content}</DialogContent>
+                <DialogActions>
+                    <Button
                         style={{
-                            fontWeight: 'bold',
+                            display: oneButton ? 'none' : 'block',
+                        }}
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => {
+                            if (onButtonClick) {
+                                onButtonClick('cancel');
+                            }
+
+                            setOpen(false);
                         }}
                     >
-                        {message}
-                    </div>
-                </Button>
-            </DialogActions>
-        </Dialog>
+                        <div
+                            style={{
+                                fontWeight: 'bold',
+                            }}
+                        >
+                            Hủy
+                        </div>
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color={status}
+                        style={{
+                            display: oneButton ? 'none' : 'block',
+                        }}
+                        onClick={() => {
+                            if (!oneButton) {
+                                if (onButtonClick) {
+                                    onButtonClick('agree');
+                                }
+                                setOpen(false);
+                            } else {
+                                handleCloseNested();
+                            }
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontWeight: 'bold',
+                            }}
+                        >
+                            {message}
+                        </div>
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </div>
     );
 }
 

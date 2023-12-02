@@ -259,134 +259,59 @@ function Job() {
             );
         };
 
-        function ChildModal() {
-            const [open, setOpen] = useState(false);
-            const handleOpen = () => {
-                setOpen(true);
-            };
-            const handleClose = () => {
-                setOpen(false);
-            };
-
-            return (
-                <Fragment>
-                    <Button onClick={handleOpen}>Open Child Modal</Button>
-                    <Modal
-                        open={open}
-                        onClose={handleClose}
-                        aria-labelledby="child-modal-title"
-                        aria-describedby="child-modal-description"
-                    >
-                        <Box sx={{ ...style, width: 200 }}>
-                            <h2 id="child-modal-title">
-                                Text in a child modal
-                            </h2>
-                            <p id="child-modal-description">
-                                Lorem ipsum, dolor sit amet consectetur
-                                adipisicing elit.
-                            </p>
-                            <Button onClick={handleClose}>
-                                Close Child Modal
-                            </Button>
-                        </Box>
-                    </Modal>
-                </Fragment>
-            );
-        }
-
-        function NestedModal() {
-            const [open, setOpen] = useState(false);
-            const handleOpen = () => {
-                setOpen(true);
-            };
-            const handleClose = () => {
-                setOpen(false);
-            };
-
-            return (
-                <div>
-                    <Button onClick={handleOpen}>Open modal</Button>
-                    <Modal
-                        open={open}
-                        onClose={handleClose}
-                        aria-labelledby="parent-modal-title"
-                        aria-describedby="parent-modal-description"
-                    >
-                        <Box sx={{ ...style, width: 400 }}>
-                            <div>
+        
+        return (
+            <div>
+                <AlertDialogModal
+                    status="success"
+                    messageSuccess="Ứng tuyển"
+                    maxWidth="sm"
+                    icon={
+                        <InfoRounded
+                            sx={{
+                                fontSize: 20,
+                            }}
+                        />
+                    }
+                    headerTitle="Cập nhật thông tin"
+                    content={
+                        <div>
+                            <Box
+                                sx={{
+                                    m: 1,
+                                }}
+                            >
                                 <RenderUploadFile />
                                 <RenderTextEdit
                                     onChangeInput={(value) => {
                                         introduceRef.current = value;
                                     }}
                                 />
-                            </div>
-                            <ChildModal />
-                        </Box>
-                    </Modal>
-                </div>
-            );
-        }
-
-        return (
-            <div>
-                <NestedModal />
+                            </Box>
+                        </div>
+                    }
+                    openDialog={[openConfirmSubmit, setOpenConfirmSubmit]}
+                    onButtonClick={(value) => handleConfirmSaveClick(value)}
+                />
+                <AlertDialogModal
+                    oneButton={true}
+                    status="success"
+                    messageSuccess="Ứng tuyển"
+                    maxWidth="sm"
+                    icon={
+                        <InfoRounded
+                            sx={{
+                                fontSize: 20,
+                            }}
+                        />
+                    }
+                    headerTitle="Cập nhật thông tin"
+                    content="Cần ít nhất 1 thông tin"
+                    openDialog={[openConfirm, setOpenConfirm]}
+                    onButtonClick={(value) => handleConfirmClick(value)}
+                />
             </div>
         );
-
-        // return (
-        //     <div>
-
-        //         <AlertDialogModal
-        //             status="success"
-        //             messageSuccess="Ứng tuyển"
-        //             maxWidth="sm"
-        //             icon={
-        //                 <InfoRounded
-        //                     sx={{
-        //                         fontSize: 20,
-        //                     }}
-        //                 />
-        //             }
-        //             headerTitle="Cập nhật thông tin"
-        //             content={
-        //                 <div>
-        //                     <Box
-        //                         sx={{
-        //                             m: 1,
-        //                         }}
-        //                     >
-        //                         <RenderUploadFile />
-        //                         <RenderTextEdit
-        //                             onChangeInput={(value) => {
-        //                                 introduceRef.current = value;
-        //                             }}
-        //                         />
-        //                     </Box>
-        //                 </div>
-        //             }
-        //             openDialog={[openConfirmSubmit, setOpenConfirmSubmit]}
-        //             onButtonClick={(value) => handleConfirmSaveClick(value)}
-        //         />
-        //         <AlertDialogModal
-        //             oneButton={true}
-        //             status="success"
-        //             messageSuccess="Ứng tuyển"
-        //             maxWidth="sm"
-        //             icon={
-        //                 <InfoRounded
-        //                     sx={{
-        //                         fontSize: 20,
-        //                     }}
-        //                 />
-        //             }
-        //             headerTitle="Cập nhật thông tin"
-        //             content="Cần ít nhất 1 thông tin"
-        //             openDialog={[openConfirm, setOpenConfirm]}
-        //             onButtonClick={(value) => handleConfirmClick(value)}
-        //         />
-        //     </div>
-        // );
     }
 
     const ListItemTextStyle = styled(ListItemText)(({ theme }) => ({
