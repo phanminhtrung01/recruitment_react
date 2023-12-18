@@ -6,71 +6,92 @@ import {
     DialogContent,
     DialogActions,
     Slide,
+    DialogContentText,
+    IconButton,
 } from '@mui/material';
 import { WarningRounded } from '@mui/icons-material';
 import { forwardRef } from 'react';
 import { useState } from 'react';
 
-function AlertDialogModal(props) {
-    const Transition = forwardRef(function Transition(props, ref) {
-        return <Slide direction="up" ref={ref} {...props} />;
-    });
+const Transition = forwardRef(function Transition(props, ref) {
+    return <Slide direction="up" ref={ref} {...props} />;
+});
 
+const AlertDialogModalNested = forwardRef((props, ref) => {
     const {
-        openDialog,
-        activeButton,
-        onButtonClick,
+        onClose = (value) => {},
+        messagePositive = 'Xóa',
+        headerTitle = ' Xác nhận',
+        minimum = false,
+        icon,
+        textIcon = 'Edit',
+        onButtonClick = (v) => {},
         status = 'error',
-        icon = (
-            <WarningRounded
-                sx={{
-                    fontSize: 20,
-                }}
-            />
-        ),
-        headerTitle = 'Xác nhận',
         content = 'Bạn đã chắc chắn xóa',
-        messageError = 'Xóa',
-        messageWarning = 'Đồng ý',
-        messageSuccess = 'Chấp nhận',
+        subContent = '',
         maxWidth = 'xs',
-        oneButton = false,
+        keepMounted = false,
+        disabledPositive = false,
+        hideNegative = false,
     } = props;
+    const [open, setOpen] = useState(false);
+    const [minimumS, setMinimum] = useState(minimum);
 
-    const [nested, setNested] = useState(false);
-
-    const [open, setOpen] = openDialog;
-
+    console.log(minimum);
     let color, message;
     if (status === 'error') {
         color = 'red';
-        message = messageError;
-    } else if (status === 'warning') {
-        color = 'yellow';
-        message = messageWarning;
-    } else if (status === 'success') {
-        message = messageSuccess;
+        message = 'Xóa';
+    }
+    if (status === 'warning') {
+        color = '#e65100';
+        message = 'Đồng ý';
+    }
+    if (status === 'success') {
+        color = 'green';
+        message = 'Đồng ý';
     }
 
-    const handleCloseNested = (e) => {
-        setNested(false);
-    };
-
-    const handleOpenNested = (e) => {
-        setNested(true);
-    };
+    if (messagePositive) {
+        message = messagePositive;
+    }
 
     return (
-        <div>
-            <Button onClick={handleOpenNested}>Đóng</Button>
+        <div {...props}>
+            {icon ? (
+                <IconButton
+                    aria-label="close"
+                    color="inherit"
+                    size="small"
+                    sx={{
+                        scale: 0.6,
+                    }}
+                    onClick={() => {
+                        setOpen(true);
+                    }}
+                >
+                    {icon}
+                </IconButton>
+            ) : minimumS ? (
+                <></>
+            ) : (
+                <Button
+                    onClick={() => {
+                        setOpen(true);
+                    }}
+                    variant="outlined"
+                >
+                    {textIcon}
+                </Button>
+            )}
+
             <Dialog
                 TransitionComponent={Transition}
                 fullWidth
                 hideBackdrop
                 maxWidth={maxWidth}
-                keepMounted
-                disableScrollLock
-                open={!oneButton ? open : nested}
+                keepMounted={keepMounted}
+                open={open || minimumS}
                 onClose={() => setOpen(false)}
             >
                 <DialogTitle
@@ -81,10 +102,14 @@ function AlertDialogModal(props) {
                         gap: 5,
                     }}
                 >
-                    {icon}
+                    <WarningRounded
+                        sx={{
+                            fontSize: 20,
+                        }}
+                    />
                     <div
                         style={{
-                            fontSize: 14,
+                            fontSize: 15,
                             fontWeight: 'bold',
                         }}
                     >
@@ -92,45 +117,27 @@ function AlertDialogModal(props) {
                     </div>
                 </DialogTitle>
                 <Divider />
-                <DialogContent>{content}</DialogContent>
-                <DialogActions>
-                    <Button
-                        style={{
-                            display: oneButton ? 'none' : 'block',
-                        }}
-                        variant="outlined"
-                        color="secondary"
-                        onClick={() => {
-                            if (onButtonClick) {
-                                onButtonClick('cancel');
-                            }
-
-                            setOpen(false);
+                <DialogContent>
+                    {content}
+                    <DialogContentText
+                        sx={{
+                            m: 1,
                         }}
                     >
-                        <div
-                            style={{
-                                fontWeight: 'bold',
-                            }}
-                        >
-                            Hủy
-                        </div>
-                    </Button>
+                        {subContent}
+                    </DialogContentText>
+                </DialogContent>
+
+                <DialogActions>
                     <Button
+                        disabled={disabledPositive}
                         variant="contained"
                         color={status}
-                        style={{
-                            display: oneButton ? 'none' : 'block',
-                        }}
                         onClick={() => {
-                            if (!oneButton) {
-                                if (onButtonClick) {
-                                    onButtonClick('agree');
-                                }
-                                setOpen(false);
-                            } else {
-                                handleCloseNested();
-                            }
+                            onButtonClick('agree');
+                            setOpen(false);
+                            setMinimum(false);
+                            onClose('positive');
                         }}
                     >
                         <div
@@ -141,10 +148,31 @@ function AlertDialogModal(props) {
                             {message}
                         </div>
                     </Button>
+                    <Button
+                        style={{
+                            display: !hideNegative ? 'block' : 'none',
+                        }}
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => {
+                            onButtonClick('cancel');
+                            setOpen(false);
+                            setMinimum(false);
+                            onClose('negative');
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontWeight: 'bold',
+                            }}
+                        >
+                            Hủy
+                        </div>
+                    </Button>
                 </DialogActions>
             </Dialog>
         </div>
     );
-}
+});
 
-export default AlertDialogModal;
+export default AlertDialogModalNested;

@@ -5,14 +5,15 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import classNames from 'classnames/bind';
 import styles from './login_page.module.scss';
-
-import { Alert, Snackbar, styled } from '@mui/material';
+import { Toaster, toast } from 'sonner';
+import { Alert, Box, Snackbar, styled } from '@mui/material';
 import Tippy from '@tippyjs/react';
 
 import { authApi, authInfoApi } from '../../../../api/auth';
 import SnackbarCustom from '../../../../components/snackbar';
 import { loginE } from '../../../../redux/authSlice';
 import { updateAll } from '../../../../redux/infoUserSlice';
+import NotifierSnackbar from '../../../../components/Notification/notifier-error';
 
 const LoginEnterprise = ({ roleName }) => {
     const requestAuth = useRequestAuth();
@@ -28,7 +29,9 @@ const LoginEnterprise = ({ roleName }) => {
         `${
             roleName === 'ENTERPRISE'
                 ? '/recruitment/enterprise'
-                : '/recruitment/student/jobs'
+                : roleName === 'STUDENT'
+                ? '/recruitment/student/jobs'
+                : '/'
         }`;
 
     const [error, setError] = useState(false);
@@ -54,37 +57,74 @@ const LoginEnterprise = ({ roleName }) => {
         e.preventDefault();
 
         const loginRequest = async () => {
-            const loginResult = await authApi({ login: login });
+            const idLoading = toast.loading('Đang đăng nhập ...');
+            try {
+                const loginRequest = { ...login, role: roleName };
+                const response = await authApi({ login: loginRequest });
 
-            if (loginResult) {
-                console.log(loginResult);
-                const accessToken = loginResult.accessToken;
-                dispatch(
-                    loginE({
-                        username: login.username,
-                        role: roleName,
-                        accessToken: accessToken,
-                    }),
-                );
+                const data = response.accessToken;
 
-                const response = await authInfoApi(requestAuth);
+                if (data) {
+                    dispatch(
+                        loginE({
+                            username: login.username,
+                            roleDB: roleName,
+                            roleUI: roleName,
+                            accessToken: data,
+                        }),
+                    );
 
-                if (response?.status === 200) {
-                    dispatch(updateAll(response.data));
+                    setSubmit(true);
+                    setLogin({
+                        username: '',
+                        password: '',
+                    });
+
+                    setTimeout(async () => {
+                        const response = await authInfoApi(requestAuth);
+
+                        if (response?.status === 200) {
+                            dispatch(updateAll(response.data));
+                        }
+                        navigate(from, { replace: true });
+                    }, 2500);
+
+                    toast.dismiss(idLoading);
+                    toast.custom((t) =>
+                        NotifierSnackbar({
+                            title: 'Thành công ',
+                            sub1: `Đăng nhập thành công!`,
+                            toast: toast,
+                            idToats: t,
+                        }),
+                    );
+                }
+            } catch (error) {
+                console.log(e);
+                const responseErr = e?.response?.data;
+                const code = e.code;
+                let message;
+                if (code === 'ERR_NETWORK') {
+                    message = 'Máy chủ chưa hoạt động';
+                } else if (code === 'ERR_BAD_REQUEST') {
+                    message = responseErr?.message;
                 }
 
-                console.log({ ...login, role: roleName });
+                if (responseErr?.message.includes('Bad credentials')) {
+                    message = 'Tài khoản hoặc mật khẩu sai!';
+                }
 
-                setSubmit(true);
-                setLogin({
-                    username: '',
-                    password: '',
-                });
-                setTimeout(() => {
-                    navigate(from, { replace: true });
-                }, 2500);
-            } else {
-                setError(true);
+                toast.dismiss(idLoading);
+                toast.custom((t) =>
+                    NotifierSnackbar({
+                        title: 'Thất bại',
+                        sub1: message,
+                        sub2: message,
+                        toast: toast,
+                        idToats: t,
+                        type: 'error',
+                    }),
+                );
             }
         };
 
@@ -106,12 +146,20 @@ const LoginEnterprise = ({ roleName }) => {
 
     return (
         <div className={cx('row')}>
+            <Toaster
+                duration={3000}
+                position="top-right"
+                theme="light"
+                richColors={true}
+            />
             <div className={cx('box-info-signup')}>
                 <div className={cx('title')}>
                     <h2>
-                        {roleName !== 'STUDENT'
+                        {roleName === 'STUDENT'
+                            ? 'Dành Cho Ứng Viên'
+                            : roleName === 'ENTERPRISE'
                             ? 'Dành Cho Nhà Tuyển Dụng'
-                            : 'Dành Cho Ứng Viên'}
+                            : 'Quản lý'}
                     </h2>
                 </div>
                 <div className={cx('step-title', 'd-flex', 'align-center')}>

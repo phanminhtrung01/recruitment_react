@@ -7,6 +7,7 @@ const today = dayjs();
 const initialState = {
     value: {
         contracts: [],
+        enterprise: null,
         currentContract: {
             contractId: '',
             name: '',
@@ -33,6 +34,16 @@ const contractsSlice = createSlice({
                 ...state.value,
                 contracts: [action.payload, ...state.value.contracts],
             };
+        },
+        updateEnterprise: (state, action) => {
+            const enterprisePayload = action.payload;
+            const enterpriseState = state.value.enterprise;
+            if (
+                enterprisePayload?.enterpriseId !==
+                enterpriseState?.enterpriseId
+            ) {
+                state.value.enterprise = action.payload;
+            }
         },
         setTabFilter: (state, action) => {
             state.value = {
@@ -123,6 +134,7 @@ const contractsSlice = createSlice({
 });
 
 export const {
+    updateEnterprise,
     setContracts,
     setTabFilter,
     setContractsFromEmpty,

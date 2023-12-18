@@ -1,7 +1,7 @@
 function Notifier() {
     return (
         <>
-            <div>Notifier Manager</div>
+            <div>thong ke ttdt</div>
         </>
     );
 }

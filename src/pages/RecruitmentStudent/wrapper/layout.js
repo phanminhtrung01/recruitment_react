@@ -10,8 +10,8 @@ export default function StudentLayout() {
 
     const links = [
         { to: 'jobs', text: 'Khám phá' },
-        { to: 'record', text: 'Hồ sơ' },
         { to: 'job', text: 'Quản lý công việc' },
+        { to: 'record', text: 'Lớp học' },
     ];
 
     return (

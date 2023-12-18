@@ -8,11 +8,6 @@ import {
     useImperativeHandle,
 } from 'react';
 
-import PropTypes from 'prop-types';
-import SwipeableViews from 'react-swipeable-views';
-
-import SearchIcon from '@mui/icons-material/Search';
-import InputLabel from '@mui/material/InputLabel';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import Box from '@mui/material/Box';
 
@@ -23,16 +18,10 @@ import { Input, Tooltip, styled } from '@mui/material';
 import LinearProgress, {
     linearProgressClasses,
 } from '@mui/material/LinearProgress';
-import { randomId } from '@mui/x-data-grid-generator';
 
 import {
-    useTheme,
     TextField,
     // Chip,
-    Collapse,
-    // Button,
-    AppBar,
-    Tabs,
     Card,
     CardContent,
     Tab,
@@ -42,19 +31,9 @@ import {
     // Grid,
     // Typography,
     Autocomplete,
-    Checkbox,
-    Radio,
-    RadioGroup,
-    FormControlLabel,
-    FormControl,
-    FormLabel,
-    InputAdornment,
     Select,
     MenuItem,
-    Divider,
     Button,
-    Stack,
-    Snackbar,
     Dialog,
     CardActions,
     DialogTitle,
@@ -83,25 +62,16 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
-import {
-    CloudUploadOutlined,
-    ClearAll,
-    AddBoxOutlined,
-    Refresh,
-    Preview,
-} from '@mui/icons-material';
+import { CloudUploadOutlined, Refresh, Preview } from '@mui/icons-material';
 
 import dayjs from 'dayjs';
 
-import TabpanelCusTom from '../../../components/TabPanel';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-    contractsByEnterpriseApi,
     enterprisesApi,
+    getContractApi,
     getTestsByIdsApi,
-    getTestsExamByIdsApi,
     jobsApi,
-    jobsByContractApi,
     jobsByPostApi,
     postsApi,
     updateJobApi,
@@ -110,34 +80,27 @@ import useRequestAuth from '../../../hooks/useRequestAuth';
 import AlertDialogModalNested from '../../../components/Dialog/index';
 
 import {
-    setJobs,
     updateJobs,
-    setJobsSelected,
     setTabFilter,
     setLevelFilter,
     setCurrentJob,
     resetCurrentJob,
-    setCurrentPostNameJob,
     setJobsFromEmpty,
     setJobsFilter,
-    setJobsFilterMode,
-    setJobsFilterValue,
-    setJobsFilterData,
-    setJobsSelectedFromEmpty,
     resetJobsSelected,
 } from '../../../redux/jobsSlice';
 
 import NotifierSnackbar from '../../../components/Notification/notifier-error';
 import { Toaster, toast } from 'sonner';
 
-function Candidate() {
+function CandidateEnterpeise() {
     const DEFAULT_DATE_FORMAT = 'DD/MM/YYYY';
 
     const requestAuth = useRequestAuth();
 
     const dispatch = useDispatch();
 
-    const enterpriseRef = useRef(null);
+    const contractRef = useRef(null);
     const postRef = useRef(null);
 
     const tabRef = useRef('wait-approve');
@@ -159,38 +122,17 @@ function Candidate() {
     });
 
     const SearchCandidate = forwardRef((props, ref) => {
-        const [enterprise, setEnterprise] = useState(enterpriseRef.current);
         const [post, setPost] = useState(postRef.current);
-        const [optionsEnterprise, setOptionsEnterprise] = useState([]);
+        const [open, setOpen] = useState(false);
         const [optionsPost, setOptionsPost] = useState([]);
 
-        const [openSelectEnterprise, setOpenSelectEnterprise] = useState(false);
-
-        const handleEnterpriseChange = (event, newValue) => {
-            setEnterprise(newValue);
-        };
         const handlePostChange = (event, newValue) => {
             setPost(newValue);
         };
 
-        const getEnterprises = async () => {
+        const getPosts = async () => {
             try {
-                const response = await enterprisesApi(requestAuth);
-
-                if (response.status === 200) {
-                    setOptionsEnterprise(response.data);
-                }
-            } catch (e) {
-                console.log('ENTERPRISES_ERROR');
-            }
-        };
-
-        const getPosts = async (enterpriseId) => {
-            try {
-                const params = {
-                    enterpriseId: enterpriseId,
-                };
-                const response = await postsApi(requestAuth, params);
+                const response = await postsApi(requestAuth);
 
                 if (response?.status === 200) {
                     setOptionsPost(response.data);
@@ -200,36 +142,17 @@ function Candidate() {
             }
         };
 
-        useImperativeHandle(ref, () => ({
-            setNull() {
-                setEnterprise(null);
-            },
-        }));
-
         useEffect(() => {
-            if (enterprise) {
-                enterpriseRef.current = enterprise;
-            } else {
-                setPost(null);
+            if (open) {
+                getPosts();
             }
-        }, [enterprise]);
+        }, [open]);
 
         useEffect(() => {
             if (post) {
                 postRef.current = post;
             }
         }, [post]);
-
-        useEffect(() => {
-            getEnterprises();
-        }, [openSelectEnterprise]);
-
-        useEffect(() => {
-            setPost(null);
-            if (enterprise) {
-                getPosts(enterprise?.enterpriseId);
-            }
-        }, [enterprise]);
 
         useEffect(() => {
             dispatch(
@@ -256,25 +179,9 @@ function Candidate() {
                         }}
                     >
                         <Autocomplete
-                            onOpen={() => {
-                                setOpenSelectEnterprise(true);
-                            }}
-                            onClose={() => {
-                                setOpenSelectEnterprise(false);
-                            }}
-                            open={openSelectEnterprise}
-                            sx={{ m: 1, width: '40%' }}
-                            disablePortal
-                            id="combo-box-contract"
-                            options={optionsEnterprise}
-                            renderInput={(params) => (
-                                <TextField {...params} label="Chọn công ty" />
-                            )}
-                            value={enterprise}
-                            getOptionLabel={(option) => option.name}
-                            onChange={handleEnterpriseChange}
-                        />
-                        <Autocomplete
+                            onOpen={() => setOpen(true)}
+                            onClose={() => setOpen(false)}
+                            open={open}
                             sx={{ m: 1, width: '40%' }}
                             disablePortal
                             id="combo-box-contract"
@@ -401,7 +308,6 @@ function Candidate() {
 
         const [rows, setRows] = useState(jobs);
         const [rowModesModel, setRowModesModel] = useState({});
-        // const [sortModel, setSortModel] = useState([]);
 
         function RenderPdf(props) {
             const { contentCv } = props;
@@ -413,22 +319,7 @@ function Candidate() {
         }
 
         // apiRef.setQuickFilterValues(['Hợp đồng 5']);
-        const InputNoneBoderStyle = styled(Input)({
-            '&:before': {
-                content: 'none',
-            },
-            '&:after': {
-                content: 'none',
-            },
-            fontSize: '1.2rem',
-            padding: 5,
-        });
 
-        const DatePickerNoneBoderStyle = styled(DatePicker)({
-            fieldset: {
-                display: 'none',
-            },
-        });
         const SelectNoneBoderStyle = styled(Select)({
             width: '100%',
             fieldset: {
@@ -450,8 +341,6 @@ function Candidate() {
             const { classes } = props;
 
             const rows = classes;
-
-            // apiRef.setQuickFilterValues(['Hợp đồng 5']);
 
             const renderCell = (params) => {
                 return (
@@ -730,26 +619,7 @@ function Candidate() {
                     revActions: [],
                 });
 
-                let statusOptions;
-                if (levelFilter.key === 'level_1') {
-                    statusOptions = [
-                        'Đang xử lý',
-                        'Đã chấp nhận',
-                        // 'Đang kiểm tra',
-                        //'Đang phỏng vấn',
-                        // 'Đã nhận việc',
-                        'Từ chối',
-                    ];
-                } else {
-                    statusOptions = [
-                        //'Đang xử lý',
-                        //'Đã chấp nhận',
-                        //'Đang kiểm tra',
-                        'Đang phỏng vấn',
-                        // 'Đã nhận việc',
-                        'Từ chối',
-                    ];
-                }
+                const statusOptions = ['Đã nhận việc', 'Từ chối'];
 
                 const handleOpenEditNoteClick = async (value, ids, ids1) => {
                     if (value === 'agree') {
@@ -1041,7 +911,6 @@ function Candidate() {
                     field: 'name',
                     headerName: 'Tên ứng viên',
                     flex: 2,
-                    // editable: true,
                     renderCell: renderCell,
                     valueGetter: (params) => params.row.student?.name,
                 },
@@ -1050,7 +919,6 @@ function Candidate() {
                     headerName: 'Ngày ứng tuyển',
                     flex: 1,
                     type: 'date',
-                    // editable: true,
                     renderCell: renderCell,
                     valueFormatter: valueFormatDate,
                 },
@@ -1058,7 +926,6 @@ function Candidate() {
                     field: 'salary',
                     headerName: 'Mức lương',
                     flex: 1,
-                    // editable: true,
                     renderCell: renderCell,
                     valueGetter: (params) => params.row.post?.salary,
                 },
@@ -1066,7 +933,6 @@ function Candidate() {
                     field: 'nameJob',
                     headerName: 'Tên vị trí ứng tuyển',
                     flex: 2,
-                    // editable: true,
                     renderCell: renderCell,
                     valueFormatter: valueFormatDate,
                     valueGetter: (params) => params.row.post?.nameJob,
@@ -1075,13 +941,10 @@ function Candidate() {
                     field: 'status',
                     headerName: 'Trạng thái',
                     flex: 1,
-                    editable: true,
+                    editable: levelFilter.key !== 'level_1',
                     type: 'singleSelect',
                     renderEditCell: (params) => (
-                        <RenderEditCellSelect
-                            params={params}
-                            levelFilter={levelFilter}
-                        />
+                        <RenderEditCellSelect params={params} />
                     ),
                 },
                 {
@@ -1117,7 +980,9 @@ function Candidate() {
                     getActions: ({ id }) => {
                         const a = apiRef.current.getSelectedRows();
 
-                        const b = Array.from(a.keys()).includes(id);
+                        const b =
+                            Array.from(a.keys()).includes(id) &&
+                            levelFilter.key !== 'level_1';
 
                         const isInEditMode =
                             rowModesModel[id]?.mode === GridRowModes.Edit;
@@ -1796,8 +1661,8 @@ function Candidate() {
             if (tabFilter === 'wait-approve') {
                 params = 'Đang xử lý';
             }
-            if (tabFilter === 'signed') {
-                params = 'Đã chấp nhận';
+            if (tabFilter === 'applied') {
+                params = 'Đã nhận việc';
             }
             if (tabFilter === 'denied') {
                 params = 'Từ chối';
@@ -1840,8 +1705,8 @@ function Candidate() {
                     if (tabFilter === 'wait-approve') {
                         statusName = 'Đang xử lý';
                     }
-                    if (tabFilter === 'signed') {
-                        statusName = 'Đã chấp nhận';
+                    if (tabFilter === 'applied') {
+                        statusName = 'Đã nhận việc';
                     }
                     if (tabFilter === 'denied') {
                         statusName = 'Từ chối';
@@ -1884,7 +1749,7 @@ function Candidate() {
 
         useImperativeHandle(ref, () => ({
             refresh() {
-                searchRef.current.setNull();
+                searchRef.current?.setNull();
                 getJobs();
             },
         }));
@@ -1907,7 +1772,9 @@ function Candidate() {
                 getRowId={(row) => row.jobApplyId}
                 columns={columns(levelFilter)}
                 editMode="row"
-                checkboxSelection={tabFilter !== 'all'}
+                checkboxSelection={
+                    levelFilter.key !== 'level_1' && tabFilter !== 'all'
+                }
                 onCellDoubleClick={handleCellDoubleClick}
                 rowModesModel={rowModesModel}
                 onRowModesModelChange={handleRowModesModelChange}
@@ -2106,8 +1973,8 @@ function Candidate() {
                                         fontSize: '1.2rem',
                                         textTransform: 'none',
                                     }}
-                                    label="Hồ sơ đã duyệt"
-                                    value="signed"
+                                    label="Hồ sơ đã nhận việc"
+                                    value="applied"
                                 />
                                 <Tab
                                     style={{
@@ -2117,10 +1984,26 @@ function Candidate() {
                                     label="Hồ sơ loại"
                                     value="denied"
                                 />
-                                <Tab
+                                <TabNoneStyle
                                     style={{
                                         fontSize: '1.2rem',
                                         textTransform: 'none',
+                                        maxWidth:
+                                            valueApprove?.key === 'level_1'
+                                                ? 360
+                                                : 0,
+                                        minWidth:
+                                            valueApprove?.key === 'level_1'
+                                                ? 90
+                                                : 0,
+                                        minHeight:
+                                            valueApprove?.key === 'level_1'
+                                                ? 48
+                                                : 0,
+                                        padding:
+                                            valueApprove?.key === 'level_1'
+                                                ? '12px 16px'
+                                                : 0,
                                     }}
                                     label="Hồ sơ ứng tuyển"
                                     value="all"
@@ -2161,4 +2044,4 @@ function Candidate() {
     );
 }
 
-export default Candidate;
+export default CandidateEnterpeise;

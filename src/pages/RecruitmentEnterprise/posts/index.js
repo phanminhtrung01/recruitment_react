@@ -21,10 +21,13 @@ import Tab from '@mui/material/Tab';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import { DataGrid, GridCellModes, GridToolbar } from '@mui/x-data-grid';
-
+import CircularProgress from '@mui/material/CircularProgress';
 import dayjs from 'dayjs';
+import { TimeField } from '@mui/x-date-pickers';
+import { GridRow } from '@mui/x-data-grid';
+import { Typography, AccordionSummary } from '@mui/material';
 
-import Typography from '@mui/material/Typography';
+import { Checkbox } from '@mui/material';
 
 import {
     Input,
@@ -37,7 +40,13 @@ import {
     DialogTitle,
     Divider,
     Slide,
+    Autocomplete,
+    Collapse,
+    IconButton,
+    Accordion,
+    AccordionDetails,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { randomId } from '@mui/x-data-grid-generator';
 import {
     GridOverlay,
@@ -62,11 +71,17 @@ import {
     Refresh,
     DeleteForever,
     WarningRounded,
+    RefreshOutlined,
 } from '@mui/icons-material';
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import { getAmountByContractDetails, postsApi } from '../../../api/auth';
+import {
+    authInfoApi,
+    getAmountByContractDetails,
+    getTestsByPostsApi,
+    postsApi,
+} from '../../../api/auth';
 import {
     setPosts,
     setTabFilter,
@@ -92,9 +107,12 @@ import { IMaskInput } from 'react-imask';
 
 import PropTypes from 'prop-types';
 import Tippy from '@tippyjs/react';
+import { useDebounce } from 'use-debounce';
 
 import NotifierSnackbar from '../../../components/Notification/notifier-error';
 import { Toaster, toast } from 'sonner';
+import AlertDialogModalNested from '../../../components/Dialog';
+import { updateAll } from '../../../redux/infoUserSlice';
 
 export default function PostsEnterPrise() {
     const DEFAULT_DATE_FORMAT = 'DD/MM/YYYY';
@@ -126,28 +144,7 @@ export default function PostsEnterPrise() {
     });
 
     function CustomToolbar(props) {
-        const { setRows, setRowModesModel } = props;
-
-        const currentRow = useSelector(
-            (state) => state.posts.value.currentPost,
-        );
-
-        const handleAddClick = () => {
-            const postApplyId = randomId();
-
-            setRows((oldRows) => [
-                ...oldRows,
-                { ...currentRow, postApplyId, isNew: true },
-            ]);
-
-            setRowModesModel((oldModel) => ({
-                ...oldModel,
-                [postApplyId]: {
-                    mode: GridRowModes.Edit,
-                    fieldToFocus: 'nameJob',
-                },
-            }));
-        };
+        const { setRows } = props;
 
         const handleRefreshClick = () => {
             setRows([]);
@@ -194,15 +191,6 @@ export default function PostsEnterPrise() {
                     </ButtonStyle>
                 </div>
                 <div>
-                    <ButtonStyle
-                        disabled={false}
-                        variant="text"
-                        component="label"
-                        startIcon={<AddBoxOutlined />}
-                        onClick={handleAddClick}
-                    >
-                        THÊM BÀI ĐĂNG
-                    </ButtonStyle>
                     <ButtonStyle
                         disabled={false}
                         variant="text"
@@ -291,7 +279,12 @@ export default function PostsEnterPrise() {
     const CrudGridPost = forwardRef((props, ref) => {
         const postsReducer = useSelector((state) => state.posts.value);
 
+        const [open, setOpen] = useState(false);
+        const [idre, setIdre] = useState();
         const apiRef = useGridApiRef();
+        const followAddressRef = useRef(true);
+        const renderRef = useRef();
+        const gridRef = useRef();
 
         const { posts, currentPost, postsFilter, tabFilter } = postsReducer;
 
@@ -302,10 +295,6 @@ export default function PostsEnterPrise() {
         const [editCell, setEditCell] = useState(false);
         const [viewCell, setViewCell] = useState(false);
         const [isEditCellSave, setIsEditCellSave] = useState(false);
-
-        const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
-        const [openWarningEditStatus, setOpenWarningEditStatus] =
-            useState(false);
 
         // apiRef.setQuickFilterValues(['Hợp đồng 5']);
         const InputNoneBoderStyle = styled(Input)({
@@ -333,6 +322,16 @@ export default function PostsEnterPrise() {
         const ButtonStyle = styled(Button)({
             minWidth: 0,
         });
+
+        const getInfo = async () => {
+            const response = await authInfoApi(requestAuth);
+
+            if (response?.status === 200) {
+                dispatch(updateAll(response.data));
+
+                return response.data;
+            }
+        };
 
         const handleConfirmRemoveClick = async (value, id) => {
             if (value === 'agree') {
@@ -504,98 +503,439 @@ export default function PostsEnterPrise() {
             [],
         );
 
-        const Transition = forwardRef(function Transition(props, ref) {
-            return <Slide direction="up" ref={ref} {...props} />;
-        });
+        function AddressRender(props) {
+            const { getValue = (value) => {} } = props;
+            const [province, setProvince] = useState(null);
+            const [district, setDistrict] = useState(null);
+            const [ward, setWard] = useState(null);
+            const { info } = useSelector((state) => state.infoUser.value);
+            const [address, setAddress] = useState(info?.address);
 
-        function AlertDialogModal(props) {
-            const {
-                openDialog,
-                onButtonClick,
-                status = 'error',
-                content = 'Bạn đã chắc chắn xóa',
-            } = props;
-            const [open, setOpen] = openDialog;
+            const [followAddress, setFollowAddress] = useState(
+                followAddressRef.current,
+            );
 
-            let color, message;
-            if (status === 'error') {
-                color = 'red';
-                message = 'Xóa';
+            const handleCheckFollowAddress = () => {
+                setFollowAddress(!followAddress);
+            };
+
+            function ProvinceSelectLazy({ delay }) {
+                const [open, setOpen] = useState(false);
+                const [options, setOptions] = useState([]);
+                const [inputProvince, setInputProvince] = useState('');
+                const [fetching, setFetching] = useState(false);
+                const [value] = useDebounce(inputProvince, delay);
+
+                useEffect(() => {
+                    (async () => {
+                        if (value.length !== 0) {
+                            setFetching(true);
+                            const response = await fetch(
+                                `https://provinces.open-api.vn/api/p/search/?q=${value}`,
+                            );
+                            const provinces = await response.json();
+
+                            setOptions(
+                                provinces.map((provincePar) => {
+                                    const province = {
+                                        name: provincePar.name,
+                                        code: provincePar.code,
+                                    };
+                                    return province;
+                                }),
+                            );
+                            setFetching(false);
+                        }
+                    })();
+                }, [value]);
+
+                useEffect(() => {
+                    if (!open) {
+                        setOptions([]);
+                    }
+                }, [open]);
+
+                return (
+                    <Autocomplete
+                        {...props}
+                        id="province-select-lazy"
+                        sx={{
+                            m: 1,
+                            width: '100%',
+                        }}
+                        open={open}
+                        onOpen={() => {
+                            setOpen(true);
+                        }}
+                        onClose={() => {
+                            setOpen(false);
+                        }}
+                        getOptionLabel={(option) => option.name}
+                        options={options}
+                        loading={fetching}
+                        autoComplete
+                        includeInputInList
+                        filterSelectedOptions
+                        value={province}
+                        noOptionsText="Không có tỉnh/thành phố phù hợp"
+                        onChange={(event, newValue) => {
+                            setOptions(
+                                newValue ? [newValue, ...options] : options,
+                            );
+                            setProvince(newValue);
+                            setFetching(false);
+                        }}
+                        onInputChange={(event, newInputValue) => {
+                            setInputProvince(newInputValue);
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Chọn tỉnh/thành phố"
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <Fragment>
+                                            {fetching ? (
+                                                <CircularProgress
+                                                    color="inherit"
+                                                    size={20}
+                                                />
+                                            ) : null}
+                                            {params.InputProps.endAdornment}
+                                        </Fragment>
+                                    ),
+                                }}
+                            />
+                        )}
+                        isOptionEqualToValue={(option, value) =>
+                            option.name === value.name
+                        }
+                    />
+                );
             }
-            if (status === 'warning') {
-                color = 'yellow';
-                message = 'Đồng ý';
+
+            function DistrictSelect() {
+                const [open, setOpen] = useState(false);
+                const [options, setOptions] = useState([]);
+                const [fetching, setFetching] = useState(false);
+
+                useMemo(() => {
+                    let active = true;
+
+                    (async () => {
+                        if (active && province) {
+                            setFetching(true);
+                            const response = await fetch(
+                                `https://provinces.open-api.vn/api/p/${province.code}?depth=2`,
+                            );
+                            const provinces = await response.json();
+
+                            setOptions(
+                                provinces.districts.map((district) => {
+                                    const newDistrict = {
+                                        name: district.name,
+                                        code: district.code,
+                                    };
+                                    return newDistrict;
+                                }),
+                            );
+                            setFetching(false);
+                        }
+                    })();
+
+                    return () => {
+                        active = false;
+                    };
+                }, []);
+
+                useEffect(() => {
+                    if (!open) {
+                        setOptions([]);
+                    }
+                }, [open]);
+
+                return (
+                    <Autocomplete
+                        id="district-select-lazy"
+                        disabled={!province}
+                        sx={{
+                            m: 1,
+                            width: '100%',
+                        }}
+                        open={open}
+                        onOpen={() => {
+                            setOpen(true);
+                        }}
+                        onClose={() => {
+                            setOpen(false);
+                        }}
+                        getOptionLabel={(option) => option.name}
+                        options={options}
+                        loading={fetching}
+                        autoComplete
+                        value={district}
+                        noOptionsText="Không có quận/huyện phù hợp"
+                        onChange={(event, newValue) => {
+                            setOptions(
+                                newValue ? [newValue, ...options] : options,
+                            );
+                            setDistrict(newValue);
+                            setFetching(false);
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Chọn quận/huyện"
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <Fragment>
+                                            {fetching ? (
+                                                <CircularProgress
+                                                    color="inherit"
+                                                    size={20}
+                                                />
+                                            ) : null}
+                                            {params.InputProps.endAdornment}
+                                        </Fragment>
+                                    ),
+                                }}
+                            />
+                        )}
+                        isOptionEqualToValue={(option, value) =>
+                            option.name === value.name
+                        }
+                    />
+                );
             }
+
+            function WardSelect() {
+                const [open, setOpen] = useState(false);
+                const [options, setOptions] = useState([]);
+                const [fetching, setFetching] = useState(false);
+
+                useMemo(() => {
+                    let active = true;
+
+                    (async () => {
+                        if (active && district) {
+                            setFetching(true);
+                            const response = await fetch(
+                                `https://provinces.open-api.vn/api/d/${district.code}?depth=2`,
+                            );
+                            const districts = await response.json();
+
+                            setOptions(
+                                districts.wards.map((ward) => {
+                                    const newWard = {
+                                        name: ward.name,
+                                        code: ward.code,
+                                    };
+                                    return newWard;
+                                }),
+                            );
+                            setFetching(false);
+                        }
+                    })();
+
+                    return () => {
+                        active = false;
+                    };
+                }, []);
+
+                useEffect(() => {
+                    if (!open) {
+                        setOptions([]);
+                    }
+                }, [open]);
+
+                return (
+                    <Autocomplete
+                        id="ward-select-lazy"
+                        disabled={!district}
+                        sx={{
+                            m: 1,
+                            width: '100%',
+                        }}
+                        open={open}
+                        onOpen={() => {
+                            setOpen(true);
+                        }}
+                        onClose={() => {
+                            setOpen(false);
+                        }}
+                        getOptionLabel={(option) => option.name}
+                        options={options}
+                        loading={fetching}
+                        autoComplete
+                        value={ward}
+                        noOptionsText="Không có quận/huyện phù hợp"
+                        onChange={(event, newValue) => {
+                            setOptions(
+                                newValue ? [newValue, ...options] : options,
+                            );
+                            setWard(newValue);
+                            setFetching(false);
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Chọn phường/xã"
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <Fragment>
+                                            {fetching ? (
+                                                <CircularProgress
+                                                    color="inherit"
+                                                    size={20}
+                                                />
+                                            ) : null}
+                                            {params.InputProps.endAdornment}
+                                        </Fragment>
+                                    ),
+                                }}
+                            />
+                        )}
+                        isOptionEqualToValue={(option, value) =>
+                            option.name === value.name
+                        }
+                    />
+                );
+            }
+
+            useEffect(() => {
+                setDistrict(null);
+            }, [province]);
+
+            useEffect(() => {
+                setWard(null);
+            }, [district]);
+            useEffect(() => {}, [ward]);
+
+            useEffect(() => {
+                if (ward && district && province) {
+                    const addressArr = [
+                        ward?.name,
+                        district?.name,
+                        province?.name,
+                    ];
+                    setAddress(addressArr.join(', '));
+                }
+            }, [ward, district, province]);
+
+            useEffect(() => {
+                getValue(address);
+            }, [address]);
+
+            useEffect(() => {
+                if (followAddress) {
+                    setAddress(info?.address);
+                    setProvince(null);
+                }
+                followAddressRef.current = followAddress;
+            }, [followAddress]);
 
             return (
-                <Dialog
-                    TransitionComponent={Transition}
-                    fullWidth
-                    hideBackdrop
-                    maxWidth="xs"
-                    keepMounted
-                    disableScrollLock
-                    open={open}
-                    onClose={() => setOpen(false)}
-                >
-                    <DialogTitle
-                        color={color}
+                <div>
+                    <div
                         style={{
                             display: 'flex',
+                            justifyContain: 'center',
                             alignItems: 'center',
                         }}
                     >
-                        <WarningRounded
-                            sx={{
-                                fontSize: 20,
-                            }}
+                        <Checkbox
+                            title="Tự động cập nhật theo địa chỉ công ty"
+                            color="success"
+                            checked={followAddress}
+                            onChange={() => handleCheckFollowAddress()}
                         />
+                        <span
+                            style={{
+                                fontSize: '1.2rem',
+                            }}
+                        >
+                            Theo địa chỉ mặc định công ty
+                            <Tippy content="Theo khoa hoc nha">
+                                <span> (*)</span>
+                            </Tippy>
+                        </span>
+                    </div>
+                    <Collapse
+                        in={!followAddress}
+                        timeout="auto"
+                        sx={{ m: 1, width: '100%' }}
+                    >
                         <div
                             style={{
-                                fontSize: 14,
-                                fontWeight: 'bold',
+                                display: 'flex',
+                                width: '100%',
+                                gap: '50px',
+                                alignItems: 'center',
                             }}
                         >
-                            Xác nhận
+                            <div
+                                style={{
+                                    flex: 1,
+                                }}
+                            >
+                                <h5>Tỉnh/Thành phố</h5>
+                                <ProvinceSelectLazy delay={1000} />
+                            </div>
+                            <div
+                                style={{
+                                    flex: 1,
+                                }}
+                            >
+                                <h5>Quận/Huyện</h5>
+                                <DistrictSelect />
+                            </div>
+                            <div
+                                style={{
+                                    flex: 1,
+                                }}
+                            >
+                                <h5>Phường/Xã</h5>
+                                <WardSelect />
+                            </div>
                         </div>
-                    </DialogTitle>
-                    <Divider />
-                    <DialogContent>{content}</DialogContent>
-                    <DialogActions>
-                        <Button
-                            variant="contained"
-                            color={status}
-                            onClick={() => {
-                                onButtonClick('agree');
-                                setOpen(false);
+                    </Collapse>
+
+                    <div>
+                        <h5>Địa chỉ</h5>
+                        <TextField
+                            disabled={true}
+                            label="Địa chỉ làm việc"
+                            sx={{
+                                m: 1,
+                                width: '80%',
+                                maxWidth: '600px',
                             }}
-                        >
-                            <div
-                                style={{
-                                    fontWeight: 'bold',
-                                }}
-                            >
-                                {message}
-                            </div>
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            color="secondary"
-                            onClick={() => {
-                                onButtonClick('cancel');
-                                setOpen(false);
+                            value={address}
+                            InputProps={{
+                                endAdornment: (
+                                    <Fragment>
+                                        <IconButton
+                                            aria-label="expand row"
+                                            size="small"
+                                            disabled={
+                                                info?.address || !followAddress
+                                            }
+                                            onClick={async () => {
+                                                const info = await getInfo();
+                                                setAddress(info.info.address);
+                                            }}
+                                        >
+                                            <RefreshOutlined />
+                                        </IconButton>
+                                    </Fragment>
+                                ),
                             }}
-                        >
-                            <div
-                                style={{
-                                    fontWeight: 'bold',
-                                }}
-                            >
-                                Hủy
-                            </div>
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                        />
+                    </div>
+                </div>
             );
         }
 
@@ -835,6 +1175,14 @@ export default function PostsEnterPrise() {
                                     }}
                                 >
                                     <ReactQuill
+                                        onKeyDown={(event) => {
+                                            if (
+                                                event.key === 'Enter' ||
+                                                event.key === 'Tab'
+                                            ) {
+                                                event.stopPropagation();
+                                            }
+                                        }}
                                         value={params.value}
                                         onChange={(value) => {
                                             handleEditCellTextChange(
@@ -1068,78 +1416,44 @@ export default function PostsEnterPrise() {
                 );
             };
 
-            const RenderEditCellTextFormBenchmark = ({ params }) => {
+            const RenderEditCellTextFormInterView = ({ params }) => {
                 const { id, hasFocus, field, colDef } = params;
                 const isInEditModeCell =
                     rowModesModel[id]?.mode === GridRowModes.Edit && hasFocus;
 
-                const benchmark = params.row.benchmarkJobDTO;
-                console.log(benchmark);
-                const [minMark, setMinMark] = useState(benchmark?.minMark);
-                const [maxMark, setMaxMark] = useState(benchmark?.maxMark);
-                const [errorMax, setErrorMax] = useState(false);
-                const [validate, setValidate] = useState({
-                    validate: '',
-                    error: false,
-                });
+                const interview = params.row.interviewInfoDTO;
 
-                const handleMinMarkChange = (event) => {
-                    setMinMark(event.target.value);
+                const [address, setAddress] = useState(interview?.location);
+                const [time, setTime] = useState(
+                    dayjs(interview?.time, 'HH:mm'),
+                );
+                const [type, setType] = useState(interview?.type);
+
+                const handleTimeChange = (value, context) => {
+                    console.log(value);
+                    setTime(value);
+                };
+                const handleTypeChange = (e, value) => {
+                    setType(value);
                 };
 
-                const handleMaxMarkChange = (event) => {
-                    setMaxMark(event.target.value);
-                };
-
                 useEffect(() => {
-                    if (minMark > maxMark) {
-                        setMaxMark(+minMark + 1);
-                    }
-                }, [minMark]);
-
-                useEffect(() => {
-                    if (+maxMark < +minMark) {
-                        setErrorMax(true);
-                    } else {
-                        setErrorMax(false);
-                    }
-                }, [maxMark]);
-
-                useEffect(() => {
-                    if (validate.error) {
-                        setTimeout(() => {
-                            setValidate({
-                                error: false,
-                                validate: '',
-                            });
-                        }, 5000);
-                    }
-                }, [validate]);
-
-                useEffect(() => {
-                    if (
-                        !(
-                            !minMark ||
-                            !maxMark ||
-                            minMark === 0 ||
-                            maxMark === 0 ||
-                            errorMax
-                        )
-                    ) {
-                        params.api.setEditCellValue(
-                            {
-                                id: id,
-                                field: field,
-                                value: {
-                                    ...benchmark,
-                                    minMark: +minMark,
-                                    maxMark: +maxMark,
-                                },
+                    params.api.setEditCellValue(
+                        {
+                            id: id,
+                            field: field,
+                            value: {
+                                ...interview,
+                                location: address,
+                                time: dayjs(time, 'HH:mm:ss'),
+                                type: type,
                             },
-                            id,
-                        );
-                    }
-                }, [minMark, maxMark, errorMax]);
+                        },
+                        id,
+                    );
+
+                    console.log(params);
+                }, [address, time, type]);
 
                 if (isInEditModeCell && editCell) {
                     return (
@@ -1151,105 +1465,86 @@ export default function PostsEnterPrise() {
                             disableScrollLock
                             open={isInEditModeCell && editCell}
                         >
-                            <DialogTitle>{colDef.headerName}</DialogTitle>
+                            <DialogTitle
+                                sx={{
+                                    fontSize: '1.6rem',
+                                    marginBottom: 2,
+                                }}
+                            >
+                                {colDef.headerName}
+                            </DialogTitle>
                             <DialogContent>
-                                <DialogContentText>
+                                <DialogContentText
+                                    sx={{
+                                        fontSize: '1.4rem',
+                                        marginBottom: 2,
+                                    }}
+                                >
                                     Chỉnh sửa thông tin {colDef.headerName}
                                 </DialogContentText>
                                 <Box
                                     sx={{
                                         display: 'flex',
                                         m: 1,
-                                        width: '60%',
                                         gap: 3,
-                                        justifyContent: 'space-evenly',
                                     }}
                                 >
-                                    <Tippy
-                                        content="Điểm không hợp lệ"
-                                        placement="auto-end"
-                                        visible={!minMark || +minMark === 0}
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContain: 'center',
+                                            gap: 10,
+                                            width: '100%',
+                                        }}
                                     >
-                                        <TextField
-                                            style={{
-                                                flex: 2,
-                                            }}
-                                            label="Nhập điểm nhỏ"
-                                            value={minMark}
-                                            onChange={handleMinMarkChange}
-                                            error={!minMark || +minMark === 0}
-                                        />
-                                    </Tippy>
-                                    <Tippy
-                                        content={
-                                            validate.error
-                                                ? errorMax
-                                                    ? 'Điểm cần lớn hơn điểm nhỏ và nhỏ hơn 10'
-                                                    : 'Điểm phải nhỏ hơn 10'
-                                                : errorMax
-                                                ? 'Điểm cần lớn hơn điểm nhỏ'
-                                                : null
-                                        }
-                                        placement="auto-end"
-                                        visible={
-                                            +maxMark < +minMark ||
-                                            errorMax ||
-                                            validate.error
-                                        }
-                                    >
-                                        <TextField
-                                            style={{
-                                                flex: 1,
-                                            }}
-                                            label="Nhập điểm lớn"
-                                            value={maxMark}
-                                            onChange={handleMaxMarkChange}
-                                            error={
-                                                !maxMark ||
-                                                validate.error ||
-                                                errorMax
-                                            }
-                                            inputProps={{
-                                                min: 1,
-                                                step: 1,
-                                                max: 10,
-                                                pattern: '\\d+',
-                                                onInput: function (e) {
-                                                    let value = parseInt(
-                                                        e.target.value,
-                                                    );
-                                                    if (value < 0) {
-                                                        value = 1;
-                                                        setValidate({
-                                                            error: true,
-                                                            validate:
-                                                                'Số lượng lớn hơn 0',
-                                                        });
-                                                    } else {
-                                                        setValidate({
-                                                            error: false,
-                                                            validate: '',
-                                                        });
-                                                    }
-                                                    if (value > 10) {
-                                                        value = 10;
-                                                        setValidate({
-                                                            error: true,
-                                                            validate: `Số lượng vượt mức. Tối đa 10`,
-                                                        });
-                                                    } else {
-                                                        setValidate({
-                                                            error: false,
-                                                            validate: '',
-                                                        });
-                                                    }
-                                                    e.target.value = value
-                                                        .toString()
-                                                        .replace(/[^0-9]/g, '');
-                                                },
-                                            }}
-                                        />
-                                    </Tippy>
+                                        <div>
+                                            <h5>Địa điểm phỏng vấn</h5>
+                                            <AddressRender
+                                                getValue={(value) => {
+                                                    console.log(value);
+                                                    setAddress(value);
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <h5>Thời gian phỏng vấn</h5>
+                                            <Tippy
+                                                placement="auto-start"
+                                                content="Chuyển đổi ngôn ngữ nhập US (United States)"
+                                            >
+                                                <TimeField
+                                                    sx={{ m: 1 }}
+                                                    label="Nhập thời gian phỏng vấn"
+                                                    onChange={handleTimeChange}
+                                                    value={time}
+                                                />
+                                            </Tippy>
+                                        </div>
+
+                                        <div>
+                                            <h5>Hình thức phỏng vấn</h5>
+                                            <Autocomplete
+                                                sx={{ m: 1 }}
+                                                disablePortal
+                                                id="combo-box-contract"
+                                                options={[
+                                                    'Trực tiếp',
+                                                    'Meeting',
+                                                    'Call',
+                                                ]}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="Chọn hình thức"
+                                                    />
+                                                )}
+                                                value={type}
+                                                onChange={handleTypeChange}
+                                            />
+                                        </div>
+                                    </div>
                                 </Box>
                             </DialogContent>
                             <DialogActions>
@@ -1263,13 +1558,7 @@ export default function PostsEnterPrise() {
                                     Hủy
                                 </Button>
                                 <Button
-                                    disabled={
-                                        !minMark ||
-                                        !maxMark ||
-                                        minMark === 0 ||
-                                        maxMark === 0 ||
-                                        errorMax
-                                    }
+                                    disabled={!address || !time || !type}
                                     onClick={handleSaveEditCellClick(id, field)}
                                     variant="contained"
                                 >
@@ -1287,6 +1576,140 @@ export default function PostsEnterPrise() {
                         }}
                     >
                         Chỉnh sửa
+                    </ButtonStyle>
+                );
+            };
+
+            const RenderTextFormInterView = ({ params }) => {
+                const { hasFocus, row, field, colDef } = params;
+
+                const { status } = row;
+
+                const isInViewModeCell = hasFocus;
+
+                const interview = params.row.interviewInfoDTO;
+
+                const [address, setAddress] = useState(interview?.location);
+                const [time, setTime] = useState(
+                    dayjs(interview?.time, 'HH:mm:ss').toDate(),
+                );
+                const [type, setType] = useState(interview?.type);
+
+                if (isInViewModeCell && viewCell) {
+                    return (
+                        <Dialog
+                            fullWidth
+                            hideBackdrop
+                            maxWidth="sm"
+                            keepMounted
+                            disableScrollLock
+                            open={isInViewModeCell && viewCell}
+                        >
+                            <DialogTitle
+                                sx={{
+                                    fontSize: '1.7rem',
+                                    marginBottom: 1,
+                                    fontWeight: 'bold',
+                                }}
+                            >
+                                {colDef.headerName}
+                            </DialogTitle>
+                            <DialogContent>
+                                <DialogContentText
+                                    sx={{
+                                        fontSize: '1.6rem',
+                                        marginBottom: 2,
+                                    }}
+                                >
+                                    Xem thông tin {colDef.headerName}
+                                </DialogContentText>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 5,
+                                        paddingLeft: 2,
+                                    }}
+                                >
+                                    <div>
+                                        <h5>Địa điểm phỏng vấn</h5>
+                                        <TextField
+                                            sx={{
+                                                m: 1,
+                                                width: '80%',
+                                            }}
+                                            disabled
+                                            value={address}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <h5>Thời gian phỏng vấn</h5>
+                                        <TimeField
+                                            disabled
+                                            sx={{ m: 1 }}
+                                            label="Nhập thời gian phỏng vấn"
+                                            value={time}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <h5>Hình thức phỏng vấn</h5>
+                                        <Autocomplete
+                                            disabled
+                                            sx={{ m: 1 }}
+                                            disablePortal
+                                            id="combo-box-contract"
+                                            options={[
+                                                'Trực tiếp',
+                                                'Meeting',
+                                                'Call',
+                                            ]}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    label="Chọn hình thức"
+                                                />
+                                            )}
+                                            value={type}
+                                        />
+                                    </div>
+                                </div>
+                            </DialogContent>
+                            <DialogActions>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => {
+                                        setViewCell(false);
+                                    }}
+                                >
+                                    Quay lại
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
+                    );
+                }
+
+                return (
+                    <ButtonStyle
+                        onClick={() => {
+                            setViewCell(true);
+                        }}
+                        sx={{
+                            width: '100%',
+                        }}
+                        variant={
+                            status === 'Từ chối' && field === 'note'
+                                ? 'contained'
+                                : 'outlined'
+                        }
+                        color={
+                            status === 'Từ chối' && field === 'note'
+                                ? 'warning'
+                                : 'info'
+                        }
+                    >
+                        Xem
                     </ButtonStyle>
                 );
             };
@@ -1383,6 +1806,424 @@ export default function PostsEnterPrise() {
                     </Tippy>
                 );
             };
+
+            const RenderSubmit = forwardRef((props, ref) => {
+                const { post, open } = props;
+                const [openDetails, setOpenDetails] = useState(open);
+                //const [post, setPost] = useState();
+
+                const CollapsibleDataGrid = forwardRef((props, ref) => {
+                    const { post } = props;
+                    const DEFAULT_DATE_FORMAT = 'DD/MM/YYYY';
+                    const [open, setOpen] = useState({});
+                    const [rows, setRows] = useState([]);
+                    const [rowsSub, setRowsSub] = useState([]);
+
+                    const valueFormatDate = useMemo(
+                        () => (params) =>
+                            dayjs(params.value, DEFAULT_DATE_FORMAT).format(
+                                DEFAULT_DATE_FORMAT,
+                            ),
+                        [],
+                    );
+
+                    const renderCell = (params) => {
+                        return (
+                            <div
+                                style={{
+                                    whiteSpace: 'normal',
+                                    overflowWrap: 'break-word',
+                                    overflow: 'auto',
+                                    paddingTop: 8,
+                                    paddingBottom: 8,
+                                    flexWrap: 'wrap',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    wordWrap: 'break-word',
+                                }}
+                            >
+                                {params.value}
+                            </div>
+                        );
+                    };
+
+                    const columns = [
+                        {
+                            field: 'name',
+                            headerName: 'Tên bài thi',
+                            flex: 2,
+                            renderCell: renderCell,
+                        },
+                        {
+                            field: 'time',
+                            headerName: 'Thời gian làm bài',
+                            flex: 1,
+                            renderCell: renderCell,
+                        },
+                        {
+                            field: 'expand',
+                            flex: 1,
+                            headerName: 'Xem chi tiết bài thi',
+                            renderCell: (params) => (
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => {
+                                        setOpen((prevOpen) => ({
+                                            ...prevOpen,
+                                            [params.id]: !prevOpen[params.id],
+                                        }));
+                                    }}
+                                >
+                                    {open[params.id]
+                                        ? 'Thu gọn'
+                                        : 'Xem chi tiết'}
+                                </Button>
+                            ),
+                        },
+                    ];
+
+                    const columnsSub = [
+                        {
+                            field: 'question',
+                            headerName: 'Câu hỏi',
+                            flex: 1,
+                            renderCell: renderCell,
+                        },
+                        {
+                            field: 'answer',
+                            headerName: 'Câu trả lời',
+                            flex: 1,
+                            valueFormatter: valueFormatDate,
+                            renderCell: renderCell,
+                        },
+                        {
+                            field: 'type',
+                            headerName: 'Loại câu hỏi',
+                            flex: 1,
+                            valueFormatter: valueFormatDate,
+                            renderCell: renderCell,
+                        },
+                        {
+                            field: 'descriptions',
+                            headerName: 'Mô tả câu trả lời',
+                            flex: 1,
+                            renderCell: renderCell,
+                        },
+                    ];
+
+                    const getTests = async (postApplyId) => {
+                        try {
+                            const response = await getTestsByPostsApi(
+                                requestAuth,
+                                postApplyId,
+                            );
+
+                            const code = response.status;
+                            const data = response.data;
+
+                            if (code === 200) {
+                                setRows(data?.testDTOS);
+                            }
+                        } catch (error) {
+                            console.log('TESTS_ERROR');
+                        }
+                    };
+
+                    // useImperativeHandle(ref, () => ({
+                    //     getTestsData(postApplyId) {
+                    //         console.log('get');
+                    //         getTests(postApplyId);
+                    //     },
+                    // }));
+
+                    useEffect(() => {
+                        getTests(post?.postApplyId);
+                    }, []);
+
+                    return (
+                        <DataGrid
+                            sx={{
+                                w: 1,
+                                marginLeft: 1,
+                                marginRight: 1,
+                                marginBottom: 2,
+                                height: 300,
+                            }}
+                            rows={rows ? rows : []}
+                            columns={columns}
+                            columnVisibilityModel={{
+                                testId: false,
+                                testDay: false,
+                                isRegister: false,
+                            }}
+                            getRowId={(row) => row.testId}
+                            hideFooter={true}
+                            onRowClick={(params) => {
+                                const id = params.id;
+                                if (!open[id]) {
+                                    const testDTO = rows.find(
+                                        (ts) => ts.testId === id,
+                                    );
+
+                                    const { testDetailDTOS } = testDTO;
+
+                                    setRowsSub(testDetailDTOS);
+                                }
+                            }}
+                            slots={{
+                                row: (params) => {
+                                    return (
+                                        <div>
+                                            <GridRow {...params}></GridRow>
+                                            <Collapse
+                                                in={
+                                                    params.selected &&
+                                                    open[params.rowId]
+                                                }
+                                            >
+                                                <Box
+                                                    margin={2}
+                                                    sx={{
+                                                        width: '90%',
+                                                        h: 1,
+                                                    }}
+                                                >
+                                                    <h3
+                                                        style={{
+                                                            fontSize: '1.4rem',
+                                                        }}
+                                                    >
+                                                        {`Chi tiết : ${params.row.name}`}
+                                                    </h3>
+                                                    {rowsSub.length > 0 ? (
+                                                        <DataGrid
+                                                            sx={{
+                                                                w: 1,
+                                                                m: 1,
+                                                            }}
+                                                            rows={rowsSub}
+                                                            columns={columnsSub}
+                                                            columnVisibilityModel={{
+                                                                testDetailsId: false,
+                                                            }}
+                                                            getRowId={(row) =>
+                                                                row.testDetailsId
+                                                            }
+                                                            hideFooter={true}
+                                                        />
+                                                    ) : (
+                                                        <div
+                                                            style={{
+                                                                fontSize:
+                                                                    '1.2rem',
+                                                                margin: 1,
+                                                            }}
+                                                        >
+                                                            Chưa có chi tiết bài
+                                                            thi
+                                                        </div>
+                                                    )}
+                                                </Box>
+                                            </Collapse>
+                                        </div>
+                                    );
+                                },
+                            }}
+                        />
+                    );
+                });
+
+                // useImperativeHandle(ref, () => ({
+                //     open() {
+                //         setOpenDetails(true);
+                //     },
+                //     setData(data) {
+                //         setPost(data);
+                //     },
+                // }));
+
+                return (
+                    <Dialog
+                        open={openDetails}
+                        fullWidth
+                        hideBackdrop
+                        maxWidth="lg"
+                        keepMounted
+                    >
+                        <DialogTitle
+                            sx={{
+                                fontSize: 20,
+                                fontWeight: 'bold',
+                            }}
+                        >
+                            Thông tin xác nhận
+                        </DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                <Accordion
+                                    sx={{
+                                        mr: 1,
+                                        mb: 1,
+                                    }}
+                                >
+                                    <AccordionSummary
+                                        sx={{
+                                            mr: 1,
+                                            m: 0,
+                                        }}
+                                        expandIcon={<ExpandMoreIcon />}
+                                        aria-controls="panel2a-content"
+                                        id="panel2a-header"
+                                    >
+                                        <Typography
+                                            gutterBottom
+                                            sx={{
+                                                fontSize: 15,
+                                                fontWeight: 'bold',
+                                            }}
+                                        >
+                                            {`Thông tin bài đăng: ${
+                                                post ? post.nameJob : ''
+                                            }`}
+                                        </Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails
+                                        sx={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: 1,
+                                            mr: 1,
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 10,
+                                            }}
+                                        >
+                                            <Typography
+                                                sx={{
+                                                    pl: 2,
+                                                    width: 200,
+                                                }}
+                                                variant="body2"
+                                                color="text.primary"
+                                            >
+                                                {`Ngày đăng tin: ${post?.datePost}`}
+                                            </Typography>
+                                            <Typography
+                                                sx={{ pl: 2 }}
+                                                variant="body2"
+                                                color="text.primary"
+                                            >
+                                                {`Ngày hết hạn: ${post?.dateExpire}`}
+                                            </Typography>
+                                        </Box>
+
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 10,
+                                            }}
+                                        >
+                                            <Typography
+                                                sx={{
+                                                    pl: 2,
+                                                    width: 200,
+                                                }}
+                                                variant="body2"
+                                                color="text.secondary"
+                                            >
+                                                {`Tuổi: ${post?.age}`}
+                                            </Typography>
+                                            <Typography
+                                                sx={{ pl: 2 }}
+                                                variant="body2"
+                                                color="text.secondary"
+                                            >
+                                                {`Giới tính: ${post?.gender}`}
+                                            </Typography>
+                                        </Box>
+
+                                        <Box>
+                                            <Typography
+                                                sx={{ pl: 2 }}
+                                                variant="body2"
+                                                color="text.secondary"
+                                            >
+                                                {`Số lượng: ${post?.amount}`}
+                                            </Typography>
+                                        </Box>
+
+                                        <Box>
+                                            <Typography
+                                                sx={{ pl: 2 }}
+                                                variant="body2"
+                                                color="text.secondary"
+                                            >
+                                                {`Mức lương: ${post?.salary}`}
+                                            </Typography>
+                                        </Box>
+
+                                        <Box>
+                                            <Typography
+                                                sx={{ pl: 2 }}
+                                                variant="body2"
+                                                color="text.secondary"
+                                            >
+                                                {`Địa chỉ: ${post?.workAddress}`}
+                                            </Typography>
+                                        </Box>
+                                        <Box>
+                                            <Typography
+                                                sx={{ pl: 2 }}
+                                                variant="body2"
+                                                color="text.primary"
+                                            >
+                                                {`Trạng thái: ${post?.status}`}
+                                            </Typography>
+                                        </Box>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </DialogContentText>
+                            <Box>
+                                <Box
+                                    sx={{
+                                        width: '100%',
+                                        mt: 1,
+                                    }}
+                                >
+                                    <h3
+                                        style={{
+                                            marginTop: 5,
+                                            fontSize: '1.6rem',
+                                            marginBottom: 5,
+                                        }}
+                                    >
+                                        Thông tin bài thi
+                                    </h3>
+                                    <CollapsibleDataGrid
+                                        ref={gridRef}
+                                        post={post}
+                                    />
+                                </Box>
+                            </Box>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    setOpen(false);
+                                }}
+                            >
+                                Quay lại
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+                );
+            });
 
             return [
                 {
@@ -1594,13 +2435,15 @@ export default function PostsEnterPrise() {
                     ),
                 },
                 {
-                    field: 'benchmarkJobDTO',
-                    headerName: 'Tiêu chí',
+                    field: 'interviewInfoDTO',
+                    headerName: 'Phỏng vấn',
                     flex: 1,
                     editable: true,
-                    renderCell: renderCellTextForm,
+                    renderCell: (params) => (
+                        <RenderTextFormInterView params={params} />
+                    ),
                     renderEditCell: (params) => (
-                        <RenderEditCellTextFormBenchmark params={params} />
+                        <RenderEditCellTextFormInterView params={params} />
                     ),
                 },
                 {
@@ -1621,7 +2464,9 @@ export default function PostsEnterPrise() {
                     headerName: 'Actions',
                     flex: 1,
                     cellClassName: 'actions',
-                    getActions: ({ id }) => {
+                    getActions: (params) => {
+                        const { id } = params;
+
                         const isInEditMode =
                             rowModesModel[id]?.mode === GridRowModes.Edit;
 
@@ -1652,62 +2497,96 @@ export default function PostsEnterPrise() {
                         }
 
                         const actions = [
-                            // TODO: HANDLE POST_APPLY_MERGE
-                            // HANDLE MERGE: OVERIGHT OR MEARGE OR BOTH
-
-                            <Tooltip title="Xem chi tiết" key={'details'}>
-                                <GridActionsCellItem
-                                    icon={<Preview />}
-                                    label="preview"
-                                    // onClick={handleDeleteClick(id)}
-                                    color="inherit"
-                                />
-                            </Tooltip>,
-                            <Tooltip title="Xóa" key={'delete'}>
-                                <GridActionsCellItem
-                                    icon={<DeleteIcon />}
-                                    label="delete"
-                                    onClick={() => setOpenConfirmDelete(true)}
-                                    color="inherit"
-                                />
-                                <AlertDialogModal
-                                    openDialog={[
-                                        openConfirmDelete,
-                                        setOpenConfirmDelete,
-                                    ]}
-                                    onButtonClick={(value) =>
-                                        handleConfirmRemoveClick(value, id)
-                                    }
-                                />
-                            </Tooltip>,
-                            <Tooltip title="Chỉnh sửa" key={'edit1'}>
-                                <GridActionsCellItem
-                                    icon={<EditIcon />}
-                                    label="edit"
-                                    onClick={
-                                        row.status !== 'Đã duyệt'
-                                            ? handleEditClick(id)
-                                            : () => {
-                                                  setOpenWarningEditStatus(
-                                                      true,
-                                                  );
-                                              }
-                                    }
-                                    color="inherit"
-                                />
-                                <AlertDialogModal
-                                    openDialog={[
-                                        openWarningEditStatus,
-                                        setOpenWarningEditStatus,
-                                    ]}
-                                    onButtonClick={(value) =>
-                                        handleWarningEditClick(value, id)
-                                    }
-                                    status="warning"
-                                    content="Bài đăng đã được xử lý sửa sẽ trở về trạng thái duyệt!"
-                                />
+                            <Tooltip title="Xem chi tiết">
+                                <div>
+                                    <GridActionsCellItem
+                                        icon={<Preview />}
+                                        label="preview"
+                                        onClick={() => {
+                                            setOpen(true);
+                                            setIdre(id);
+                                        }}
+                                        color="inherit"
+                                    ></GridActionsCellItem>
+                                    {idre === id && (
+                                        <RenderSubmit
+                                            open={open}
+                                            post={rows.find(
+                                                (row) => row.postApplyId === id,
+                                            )}
+                                        />
+                                    )}
+                                </div>
                             </Tooltip>,
                         ];
+
+                        if (tabFilter !== 'signed') {
+                            actions.push(
+                                <Tooltip title="Xóa">
+                                    <div>
+                                        <AlertDialogModalNested
+                                            icon={<DeleteIcon />}
+                                            onButtonClick={(value) =>
+                                                handleConfirmRemoveClick(
+                                                    value,
+                                                    id,
+                                                )
+                                            }
+                                            subContent={
+                                                <Box>
+                                                    Các thông tin kèm theo sẽ bị
+                                                    mất
+                                                    <Box
+                                                        sx={{
+                                                            m: 1,
+                                                        }}
+                                                    >
+                                                        <li>
+                                                            Thông tin liên hệ
+                                                        </li>
+                                                        <li>
+                                                            Thông tin phỏng vấn
+                                                        </li>
+                                                        <li>
+                                                            Thông tin bài thi
+                                                        </li>
+                                                    </Box>
+                                                </Box>
+                                            }
+                                            maxWidth="sm"
+                                        />
+                                    </div>
+                                </Tooltip>,
+                                <Tooltip title="Chỉnh sửa">
+                                    <div>
+                                        <GridActionsCellItem
+                                            icon={<EditIcon />}
+                                            label="edit"
+                                            onClick={handleEditClick(id)}
+                                            color="inherit"
+                                        />
+                                    </div>
+                                </Tooltip>,
+                            );
+                        } else {
+                            actions.push(
+                                <Tooltip title="Chỉnh sửa">
+                                    <div>
+                                        <AlertDialogModalNested
+                                            icon={<EditIcon />}
+                                            onButtonClick={(value) =>
+                                                handleWarningEditClick(
+                                                    value,
+                                                    id,
+                                                )
+                                            }
+                                            status="warning"
+                                            content="Bài đăng đã được xử lý sửa sẽ trở về trạng thái duyệt!"
+                                        />
+                                    </div>
+                                </Tooltip>,
+                            );
+                        }
 
                         return [<Box>{actions}</Box>];
                     },
@@ -1901,10 +2780,29 @@ export default function PostsEnterPrise() {
             if (!isEditCellSave) {
                 const idLoading = toast.loading('Đang cập nhật');
 
+                console.log(newRow);
+
                 try {
+                    const dataRequest = {
+                        ...newRow,
+                        datePost: dayjs(
+                            newRow.datePost,
+                            DEFAULT_DATE_FORMAT,
+                        ).format(DEFAULT_DATE_FORMAT),
+                        dateExpire: dayjs(
+                            newRow.dateExpire,
+                            DEFAULT_DATE_FORMAT,
+                        ).format(DEFAULT_DATE_FORMAT),
+                        interviewInfoDTO: {
+                            ...newRow.interviewInfoDTO,
+                            time: dayjs(newRow.interviewInfoDTO.time).format(
+                                'HH:mm:ss',
+                            ),
+                        },
+                    };
                     const response = await requestAuth.put(
                         '/post-apply/update_all',
-                        JSON.stringify(newRow),
+                        JSON.stringify(dataRequest),
                     );
                     const data = response.data;
                     const code = data.status;
@@ -2002,13 +2900,14 @@ export default function PostsEnterPrise() {
 
         const getPosts = async () => {
             try {
+                 
                 const response = await postsApi(requestAuth);
 
                 const status = response.status;
 
                 if (status === 200) {
                     const data = response.data;
-                    console.log(data);
+
                     dispatch(setPostsFromEmpty(data));
                     setRows(data);
                 }
@@ -2027,12 +2926,6 @@ export default function PostsEnterPrise() {
         }));
 
         useEffect(() => {
-            if (!rows[rows.length - 1]?.isNew) {
-                console.log('row lasted old', rows[rows.length - 1]);
-            }
-        }, [rows]);
-
-        useEffect(() => {
             getPosts();
         }, []);
 
@@ -2044,7 +2937,7 @@ export default function PostsEnterPrise() {
 
                 let valueTab;
                 if (tabFilter === 'wait-approve') {
-                    valueTab = 'Đang chờ';
+                    valueTab = 'Đang chờ duyệt';
                 }
                 if (tabFilter === 'signed') {
                     valueTab = 'Đã duyệt';
@@ -2117,20 +3010,12 @@ export default function PostsEnterPrise() {
                 slotProps={{
                     toolbar: {
                         setRows,
-                        setRowModesModel,
                     },
                 }}
                 initialState={{
                     filter: {
                         filterModel: {
-                            items: [
-                                {
-                                    id: 1,
-                                    field: 'name',
-                                    operator: 'contains',
-                                    value: 'DG',
-                                },
-                            ],
+                            items: [],
                             quickFilterLogicOperator: GridLogicOperator.Or,
                         },
                     },

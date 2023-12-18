@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import './style.scss';
 import { ConVerterSVG } from '../../access/img/svg';
+import AccountMenu from '../../components/Account';
 
 function Recruitment({ roleName }) {
     return (
@@ -11,15 +12,22 @@ function Recruitment({ roleName }) {
                     <span> / </span>
                     <span>Việc làm</span>
                 </div>
-                <div className="converter">
-                    <div className="recruiment-contain">
-                        <h2>
-                            {roleName === 'ENTERPRISE'
-                                ? 'Dành Cho Ứng Viên'
-                                : 'Dành Cho Doanh nghiệp'}
-                        </h2>
+                <div
+                    style={{
+                        display: 'flex',
+                    }}
+                >
+                    <div className="converter">
+                        <div className="recruiment-contain">
+                            <h2>
+                                {roleName === 'ENTERPRISE'
+                                    ? 'Dành Cho Ứng Viên'
+                                    : 'Dành Cho Doanh nghiệp'}
+                            </h2>
+                        </div>
+                        <ConVerterSVG className="icon-converter" />
                     </div>
-                    <ConVerterSVG className="icon-converter" />
+                    <AccountMenu />
                 </div>
             </div>
 

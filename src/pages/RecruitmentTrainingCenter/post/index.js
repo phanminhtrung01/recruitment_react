@@ -21,7 +21,7 @@ import Tab from '@mui/material/Tab';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import { DataGrid, GridCellModes, GridToolbar } from '@mui/x-data-grid';
-
+import { GridRow } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 
 import Typography from '@mui/material/Typography';
@@ -37,7 +37,13 @@ import {
     DialogTitle,
     Divider,
     Slide,
+    Autocomplete,
+    Collapse,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { randomId } from '@mui/x-data-grid-generator';
 import {
     GridOverlay,
@@ -66,7 +72,14 @@ import {
 
 import { useDispatch, useSelector } from 'react-redux';
 
-import { getAmountByContractDetails, postsApi } from '../../../api/auth';
+import {
+    getAmountByContractDetails,
+    postsApi,
+    postsAllApi,
+    getTestsByPostsApi,
+    getContractDetailsByContractApi,
+    getContractDetailsByPostApplyApi,
+} from '../../../api/auth';
 import {
     setPosts,
     setTabFilter,
@@ -95,6 +108,8 @@ import Tippy from '@tippyjs/react';
 
 import NotifierSnackbar from '../../../components/Notification/notifier-error';
 import { Toaster, toast } from 'sonner';
+import { TimeField } from '@mui/x-date-pickers';
+import AlertDialogModalNested from '../../../components/Dialog';
 
 export default function Post() {
     const DEFAULT_DATE_FORMAT = 'DD/MM/YYYY';
@@ -292,6 +307,8 @@ export default function Post() {
         const postsReducer = useSelector((state) => state.posts.value);
 
         const apiRef = useGridApiRef();
+        const [openDetails, setOpenDetails] = useState(false);
+        const [idRef, setIdRef] = useState(false);
 
         const { posts, currentPost, postsFilter, tabFilter } = postsReducer;
 
@@ -303,27 +320,7 @@ export default function Post() {
         const [viewCell, setViewCell] = useState(false);
         const [isEditCellSave, setIsEditCellSave] = useState(false);
 
-        const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
-        const [openWarningEditStatus, setOpenWarningEditStatus] =
-            useState(false);
-
         // apiRef.setQuickFilterValues(['Hợp đồng 5']);
-        const InputNoneBoderStyle = styled(Input)({
-            '&:before': {
-                content: 'none',
-            },
-            '&:after': {
-                content: 'none',
-            },
-            fontSize: '1.2rem',
-            padding: 5,
-        });
-
-        const DatePickerNoneBoderStyle = styled(DatePicker)({
-            fieldset: {
-                display: 'none',
-            },
-        });
         const SelectNoneBoderStyle = styled(Select)({
             width: '100%',
             fieldset: {
@@ -334,82 +331,8 @@ export default function Post() {
             minWidth: 0,
         });
 
-        const handleConfirmRemoveClick = async (value, id) => {
-            if (value === 'agree') {
-                const idLoading = toast.loading('Đang xóa ...');
-
-                try {
-                    const response = await requestAuth.delete(
-                        '/post-apply/delete',
-                        {
-                            params: {
-                                postApplyId: id,
-                            },
-                        },
-                    );
-                    const data = response.data;
-                    const code = data.status;
-
-                    if (code === 200) {
-                        dispatch(
-                            setPostsFromEmpty(
-                                rows.filter((row) => row.postApplyId !== id),
-                            ),
-                        );
-                        dispatch(resetCurrentPost());
-
-                        setRows((prevRows) =>
-                            prevRows.filter((row) => row.postApplyId !== id),
-                        );
-
-                        toast.dismiss(idLoading);
-                        toast.custom((t) =>
-                            NotifierSnackbar({
-                                title: 'Thành công ',
-                                sub1: 'Xóa tin tuyển dụng thành công!',
-                                toast: toast,
-                                idToats: t,
-                            }),
-                        );
-                    }
-                } catch (e) {
-                    console.error(e);
-                    const responseErr = e?.response.data;
-                    const code = e.code;
-                    let message;
-                    if (code === 'ERR_NETWORK') {
-                        message = e.message;
-                    } else if (
-                        code === 'ERR_BAD_REQUEST' ||
-                        code === 'ERR_BAD_RESPONSE'
-                    ) {
-                        message = responseErr.message;
-                    }
-
-                    if (message.includes('CONSTRAINT')) {
-                        let parts = message.split(' CONSTRAINT ');
-
-                        if (parts[0] === 'apply' && parts[1] === 'post_apply') {
-                            message = 'Bài đăng đã được ứng tuyển';
-                        }
-                    }
-
-                    toast.dismiss(idLoading);
-                    toast.custom((t) =>
-                        NotifierSnackbar({
-                            title: 'Thất bại',
-                            sub1: 'Xóa tin tuyển dụng không thất bại!',
-                            sub2: message,
-                            toast: toast,
-                            idToats: t,
-                            type: 'error',
-                        }),
-                    );
-                }
-            }
-        };
-
         const handleWarningEditClick = async (value, id) => {
+            console.log(id);
             if (value === 'agree') {
                 setRowModesModel((prevRowModesModel) => {
                     return {
@@ -424,60 +347,11 @@ export default function Post() {
             }
         };
 
-        const validateDate = useCallback(
-            (nameField) => {
-                if (nameField) {
-                    if (nameField === 'datePost') {
-                        return dayjs();
-                    }
-
-                    if (nameField === 'dateExpire') {
-                        const dateMin1 = currentPost?.datePost;
-
-                        if (dateMin1) {
-                            return dayjs(dateMin1, DEFAULT_DATE_FORMAT).add(
-                                1,
-                                'day',
-                            );
-                        }
-                    }
-
-                    if (nameField === 'terminationDate') {
-                        const dateMin2 = currentPost?.dateExpire;
-                        console.log('dateMin2', dateMin2);
-
-                        if (dateMin2) {
-                            return dayjs(dateMin2, DEFAULT_DATE_FORMAT).add(
-                                1,
-                                'day',
-                            );
-                        }
-                    }
-                }
-            },
-            [currentPost?.datePost, currentPost?.dateExpire],
-        );
-
         const handleEditCellTextChange = useCallback((params, value) => {
             params.api.setEditCellValue({
                 ...params,
                 value: value,
             });
-        }, []);
-
-        const handleEditCellDateChange = useCallback((params, value) => {
-            params.api.setEditCellValue({
-                ...params,
-                value: value,
-            });
-
-            if (params.field === 'datePost') {
-                dispatch(setCurrentPostDatePost(value));
-            }
-
-            if (params.field === 'dateExpire') {
-                dispatch(setCurrentPostDateExpire(value));
-            }
         }, []);
 
         const valueFormatDate = useMemo(
@@ -488,101 +362,493 @@ export default function Post() {
             [],
         );
 
-        const Transition = forwardRef(function Transition(props, ref) {
-            return <Slide direction="up" ref={ref} {...props} />;
-        });
+        const RenderSubmit = forwardRef((props, ref) => {
+            const { post, open } = props;
+            const [openSub, setOpen] = useState(open);
+            const [position, setPosition] = useState(open);
+            //const [post, setPost] = useState();
 
-        function AlertDialogModal(props) {
-            const {
-                openDialog,
-                onButtonClick,
-                status = 'error',
-                content = 'Bạn đã chắc chắn xóa',
-                messageError = 'Xóa',
-            } = props;
-            const [open, setOpen] = openDialog;
+            const CollapsibleDataGrid = forwardRef((props, ref) => {
+                const { post } = props;
+                const DEFAULT_DATE_FORMAT = 'DD/MM/YYYY';
+                const [open, setOpen] = useState({});
+                const [rows, setRows] = useState([]);
+                const [rowsSub, setRowsSub] = useState([]);
 
-            let color, message;
-            if (status === 'error') {
-                color = 'red';
-                message = messageError ?? 'Đồng ý';
-            }
-            if (status === 'warning') {
-                color = 'yellow';
-                message = 'Đồng ý';
-            }
+                const valueFormatDate = useMemo(
+                    () => (params) =>
+                        dayjs(params.value, DEFAULT_DATE_FORMAT).format(
+                            DEFAULT_DATE_FORMAT,
+                        ),
+                    [],
+                );
+
+                const renderCell = (params) => {
+                    return (
+                        <div
+                            style={{
+                                whiteSpace: 'normal',
+                                overflowWrap: 'break-word',
+                                overflow: 'auto',
+                                paddingTop: 8,
+                                paddingBottom: 8,
+                                flexWrap: 'wrap',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                wordWrap: 'break-word',
+                            }}
+                        >
+                            {params.value}
+                        </div>
+                    );
+                };
+
+                const columns = [
+                    {
+                        field: 'name',
+                        headerName: 'Tên bài thi',
+                        flex: 2,
+                        renderCell: renderCell,
+                    },
+                    {
+                        field: 'time',
+                        headerName: 'Thời gian làm bài',
+                        flex: 1,
+                        renderCell: renderCell,
+                    },
+                    {
+                        field: 'expand',
+                        flex: 1,
+                        headerName: 'Xem chi tiết bài thi',
+                        renderCell: (params) => (
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    setOpen((prevOpen) => ({
+                                        ...prevOpen,
+                                        [params.id]: !prevOpen[params.id],
+                                    }));
+                                }}
+                            >
+                                {open[params.id] ? 'Thu gọn' : 'Xem chi tiết'}
+                            </Button>
+                        ),
+                    },
+                ];
+
+                const columnsSub = [
+                    {
+                        field: 'question',
+                        headerName: 'Câu hỏi',
+                        flex: 1,
+                        renderCell: renderCell,
+                    },
+                    {
+                        field: 'answer',
+                        headerName: 'Câu trả lời',
+                        flex: 1,
+                        valueFormatter: valueFormatDate,
+                        renderCell: renderCell,
+                    },
+                    {
+                        field: 'type',
+                        headerName: 'Loại câu hỏi',
+                        flex: 1,
+                        valueFormatter: valueFormatDate,
+                        renderCell: renderCell,
+                    },
+                    {
+                        field: 'descriptions',
+                        headerName: 'Mô tả câu trả lời',
+                        flex: 1,
+                        renderCell: renderCell,
+                    },
+                ];
+
+                const getTests = async (postApplyId) => {
+                    try {
+                        const response = await getTestsByPostsApi(
+                            requestAuth,
+                            postApplyId,
+                        );
+
+                        const code = response.status;
+                        const data = response.data;
+
+                        if (code === 200) {
+                            setRows(data?.testDTOS);
+                        }
+                    } catch (error) {
+                        console.log('TESTS_ERROR');
+                    }
+                };
+
+                // useImperativeHandle(ref, () => ({
+                //     getTestsData(postApplyId) {
+                //         console.log('get');
+                //         getTests(postApplyId);
+                //     },
+                // }));
+
+                useEffect(() => {
+                    getTests(post?.postApplyId);
+                }, []);
+
+                return (
+                    <DataGrid
+                        sx={{
+                            w: 1,
+                            marginLeft: 1,
+                            marginRight: 1,
+                            marginBottom: 2,
+                            height: 300,
+                        }}
+                        rows={rows ? rows : []}
+                        columns={columns}
+                        columnVisibilityModel={{
+                            testId: false,
+                            testDay: false,
+                            isRegister: false,
+                        }}
+                        getRowId={(row) => row.testId}
+                        hideFooter={true}
+                        onRowClick={(params) => {
+                            const id = params.id;
+                            if (!open[id]) {
+                                const testDTO = rows.find(
+                                    (ts) => ts.testId === id,
+                                );
+
+                                const { testDetailDTOS } = testDTO;
+
+                                setRowsSub(testDetailDTOS);
+                            }
+                        }}
+                        slots={{
+                            row: (params) => {
+                                return (
+                                    <div>
+                                        <GridRow {...params}></GridRow>
+                                        <Collapse
+                                            in={
+                                                params.selected &&
+                                                open[params.rowId]
+                                            }
+                                        >
+                                            <Box
+                                                margin={2}
+                                                sx={{
+                                                    width: '90%',
+                                                    h: 1,
+                                                }}
+                                            >
+                                                <h3
+                                                    style={{
+                                                        fontSize: '1.4rem',
+                                                    }}
+                                                >
+                                                    {`Chi tiết : ${params.row.name}`}
+                                                </h3>
+                                                {rowsSub.length > 0 ? (
+                                                    <DataGrid
+                                                        sx={{
+                                                            w: 1,
+                                                            m: 1,
+                                                        }}
+                                                        rows={rowsSub}
+                                                        columns={columnsSub}
+                                                        columnVisibilityModel={{
+                                                            testDetailsId: false,
+                                                        }}
+                                                        getRowId={(row) =>
+                                                            row.testDetailsId
+                                                        }
+                                                        hideFooter={true}
+                                                    />
+                                                ) : (
+                                                    <div
+                                                        style={{
+                                                            fontSize: '1.2rem',
+                                                            margin: 1,
+                                                        }}
+                                                    >
+                                                        Chưa có chi tiết bài thi
+                                                    </div>
+                                                )}
+                                            </Box>
+                                        </Collapse>
+                                    </div>
+                                );
+                            },
+                        }}
+                    />
+                );
+            });
+
+            useEffect(() => {
+                const getContractDetails = async () => {
+                    try {
+                        const response = await getContractDetailsByPostApplyApi(
+                            requestAuth,
+                            post.postApplyId,
+                        );
+                        const code = response.status;
+                        const data = response.data;
+
+                        if (code === 200) {
+                            if (data && data?.position) {
+                                setPosition(data.position);
+                            }
+                        }
+                    } catch (error) {
+                        console.log('CONTRACT_DETAILS_ERROR');
+                    }
+                };
+
+                getContractDetails();
+            }, []);
+            // recordId;
 
             return (
                 <Dialog
-                    TransitionComponent={Transition}
+                    open={openSub}
                     fullWidth
                     hideBackdrop
-                    maxWidth="xs"
+                    maxWidth="lg"
                     keepMounted
-                    disableScrollLock
-                    open={open}
-                    onClose={() => setOpen(false)}
                 >
                     <DialogTitle
-                        color={color}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
+                        sx={{
+                            fontSize: 20,
+                            fontWeight: 'bold',
                         }}
                     >
-                        <WarningRounded
-                            sx={{
-                                fontSize: 20,
-                            }}
-                        />
-                        <div
-                            style={{
-                                fontSize: 14,
-                                fontWeight: 'bold',
-                            }}
-                        >
-                            Xác nhận
-                        </div>
+                        Thông tin chi tiết bài đăng
                     </DialogTitle>
-                    <Divider />
-                    <DialogContent>{content}</DialogContent>
+                    <DialogContent>
+                        <DialogContentText>
+                            <Accordion
+                                sx={{
+                                    mr: 1,
+                                    mb: 1,
+                                }}
+                            >
+                                <AccordionSummary
+                                    sx={{
+                                        mr: 1,
+                                        m: 0,
+                                    }}
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls="panel2a-content"
+                                    id="panel2a-header"
+                                >
+                                    <Typography
+                                        gutterBottom
+                                        sx={{
+                                            fontSize: 15,
+                                            fontWeight: 'bold',
+                                        }}
+                                    >
+                                        {`Thông tin  bài đăng: ${
+                                            post ? post.nameJob : ''
+                                        }`}
+                                    </Typography>
+                                </AccordionSummary>
+                                <AccordionDetails
+                                    sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        mr: 1,
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 10,
+                                        }}
+                                    >
+                                        <Typography
+                                            sx={{
+                                                pl: 2,
+                                                width: 200,
+                                            }}
+                                            variant="body2"
+                                            color="text.primary"
+                                        >
+                                            {`Ngày đăng tin: ${post?.datePost}`}
+                                        </Typography>
+                                        <Typography
+                                            sx={{ pl: 2 }}
+                                            variant="body2"
+                                            color="text.primary"
+                                        >
+                                            {`Ngày hết hạn: ${post?.dateExpire}`}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 10,
+                                        }}
+                                    >
+                                        <Typography
+                                            sx={{
+                                                pl: 2,
+                                                width: 200,
+                                            }}
+                                            variant="body2"
+                                            color="text.secondary"
+                                        >
+                                            {`Tuổi: ${post?.age}`}
+                                        </Typography>
+                                        <Typography
+                                            sx={{ pl: 2 }}
+                                            variant="body2"
+                                            color="text.secondary"
+                                        >
+                                            {`Giới tính: ${post?.gender}`}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box>
+                                        <Typography
+                                            sx={{ pl: 2 }}
+                                            variant="body2"
+                                            color="text.secondary"
+                                        >
+                                            {`Số lượng: ${post?.amount}`}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box>
+                                        <Typography
+                                            sx={{ pl: 2 }}
+                                            variant="body2"
+                                            color="text.secondary"
+                                        >
+                                            {`Mức lương: ${post?.salary}`}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box>
+                                        <Typography
+                                            sx={{ pl: 2 }}
+                                            variant="body2"
+                                            color="text.secondary"
+                                        >
+                                            {`Địa chỉ: ${post?.workAddress}`}
+                                        </Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography
+                                            sx={{ pl: 2 }}
+                                            variant="body2"
+                                            color="text.primary"
+                                        >
+                                            {`Trạng thái: ${post?.status}`}
+                                        </Typography>
+                                    </Box>
+                                </AccordionDetails>
+                            </Accordion>
+                        </DialogContentText>
+
+                        <DialogContentText>
+                            <Accordion
+                                sx={{
+                                    mr: 1,
+                                    mb: 1,
+                                }}
+                            >
+                                <AccordionSummary
+                                    sx={{
+                                        mr: 1,
+                                        m: 0,
+                                    }}
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls="panel2a-content"
+                                    id="panel2a-header"
+                                >
+                                    <Typography
+                                        gutterBottom
+                                        sx={{
+                                            fontSize: 15,
+                                            fontWeight: 'bold',
+                                        }}
+                                    >
+                                        {`Thông tin vị trí của bài đăng: ${
+                                            position ? position.name : ''
+                                        }`}
+                                    </Typography>
+                                </AccordionSummary>
+                                <AccordionDetails
+                                    sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        mr: 1,
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 10,
+                                        }}
+                                    >
+                                        <Typography
+                                            sx={{ pl: 2 }}
+                                            variant="body2"
+                                            color="text.primary"
+                                        >
+                                            {`Mô tả: ${
+                                                position
+                                                    ? position.descriptions
+                                                    : ''
+                                            }`}
+                                        </Typography>
+                                    </Box>
+                                </AccordionDetails>
+                            </Accordion>
+                        </DialogContentText>
+
+                        <Box>
+                            <Box
+                                sx={{
+                                    width: '100%',
+                                    mt: 1,
+                                }}
+                            >
+                                <h3
+                                    style={{
+                                        marginTop: 5,
+                                        fontSize: '1.6rem',
+                                        marginBottom: 5,
+                                    }}
+                                >
+                                    Thông tin bài thi
+                                </h3>
+                                <CollapsibleDataGrid post={post} />
+                            </Box>
+                        </Box>
+                    </DialogContent>
                     <DialogActions>
                         <Button
-                            variant="contained"
-                            color={status}
-                            onClick={() => {
-                                onButtonClick('agree');
-                                setOpen(false);
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontWeight: 'bold',
-                                }}
-                            >
-                                {message}
-                            </div>
-                        </Button>
-                        <Button
                             variant="outlined"
-                            color="secondary"
                             onClick={() => {
-                                onButtonClick('cancel');
+                                setOpenDetails(false);
                                 setOpen(false);
                             }}
                         >
-                            <div
-                                style={{
-                                    fontWeight: 'bold',
-                                }}
-                            >
-                                Hủy
-                            </div>
+                            Quay lại
                         </Button>
                     </DialogActions>
                 </Dialog>
             );
-        }
+        });
 
         const columns = () => {
             const renderCell = (params) => {
@@ -820,6 +1086,14 @@ export default function Post() {
                                     }}
                                 >
                                     <ReactQuill
+                                        onKeyDown={(event) => {
+                                            if (
+                                                event.key === 'Enter' ||
+                                                event.key === 'Tab'
+                                            ) {
+                                                event.stopPropagation();
+                                            }
+                                        }}
                                         style={{
                                             width: '100%',
                                         }}
@@ -884,12 +1158,11 @@ export default function Post() {
                     availableOptions = statusOptions.slice(currentValueIndex);
                 }
 
-                console.log(openEditNote);
-
                 const handleOpenEditNoteClick = async (value, id) => {
                     if (value === 'agree') {
                         setEditNote(true);
                     }
+                    console.log(id);
                 };
 
                 return (
@@ -937,82 +1210,232 @@ export default function Post() {
                                 </MenuItem>
                             ))}
                         </SelectNoneBoderStyle>
-                        <AlertDialogModal
-                            openDialog={[openEditNote, setOpenEditNote]}
-                            onButtonClick={(value) =>
-                                handleOpenEditNoteClick(value, params.id)
-                            }
-                            status="warning"
-                            content="Cập nhật lý do từ từ chối"
-                        />
+                        {openEditNote && (
+                            <>
+                                <AlertDialogModalNested
+                                    minimum={openEditNote}
+                                    maxWidth="sm"
+                                    onButtonClick={(value) =>
+                                        handleOpenEditNoteClick(
+                                            value,
+                                            params.id,
+                                        )
+                                    }
+                                    status="warning"
+                                    content="Cập nhật lý do từ từ chối"
+                                />
+                                <Dialog
+                                    open={editNote}
+                                    fullWidth
+                                    hideBackdrop
+                                    maxWidth="md"
+                                    keepMounted
+                                    disableScrollLock
+                                >
+                                    <DialogTitle>Ghi chú</DialogTitle>
+                                    <DialogContent>
+                                        <DialogContentText>
+                                            Cập nhật Ghi chú
+                                        </DialogContentText>
+                                        <Box
+                                            sx={{
+                                                m: 1,
+                                                width: '60%',
+                                            }}
+                                        >
+                                            <ReactQuill
+                                                onKeyDown={(event) => {
+                                                    if (
+                                                        event.key === 'Enter' ||
+                                                        event.key === 'Tab'
+                                                    ) {
+                                                        event.stopPropagation();
+                                                    }
+                                                }}
+                                                onChange={setValueNote}
+                                                value={valueNote}
+                                            />
+                                        </Box>
+                                    </DialogContent>
+                                    <DialogActions>
+                                        <Button
+                                            variant="outlined"
+                                            onClick={() => {
+                                                setEditNote(false);
+                                            }}
+                                        >
+                                            Quay lại
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => {
+                                                params.api.setEditCellValue(
+                                                    {
+                                                        id: params.id,
+                                                        field: 'note',
+                                                        value: valueNote,
+                                                    },
+                                                    params.id,
+                                                );
+
+                                                setRowModesModel(
+                                                    (prevRowModesModel) => {
+                                                        return {
+                                                            ...prevRowModesModel,
+                                                            [params.id]: {
+                                                                mode: GridRowModes.View,
+                                                                field: 'status',
+                                                                cellToFocusAfter:
+                                                                    'right',
+                                                            },
+                                                        };
+                                                    },
+                                                );
+
+                                                setEditNote(false);
+                                            }}
+                                        >
+                                            Lưu
+                                        </Button>
+                                    </DialogActions>
+                                </Dialog>
+                            </>
+                        )}
+                    </div>
+                );
+            };
+
+            const RenderTextFormInterView = ({ params }) => {
+                const { hasFocus, row, field, colDef } = params;
+
+                const { status } = row;
+
+                const isInViewModeCell = hasFocus;
+
+                const interview = params.row.interviewInfoDTO;
+
+                const [address, setAddress] = useState(interview?.location);
+                const [time, setTime] = useState(
+                    dayjs(interview?.time, 'HH:mm:ss').toDate(),
+                );
+                const [type, setType] = useState(interview?.type);
+
+                if (isInViewModeCell && viewCell) {
+                    return (
                         <Dialog
-                            open={editNote}
                             fullWidth
                             hideBackdrop
-                            maxWidth="md"
+                            maxWidth="sm"
                             keepMounted
                             disableScrollLock
+                            open={isInViewModeCell && viewCell}
                         >
-                            <DialogTitle>Ghi chu</DialogTitle>
+                            <DialogTitle
+                                sx={{
+                                    fontSize: '1.7rem',
+                                    marginBottom: 1,
+                                    fontWeight: 'bold',
+                                }}
+                            >
+                                {colDef.headerName}
+                            </DialogTitle>
                             <DialogContent>
-                                <DialogContentText>
-                                    Xem thông tin Ghi chu
-                                </DialogContentText>
-                                <Box
+                                <DialogContentText
                                     sx={{
-                                        m: 1,
-                                        width: '60%',
+                                        fontSize: '1.5rem',
+                                        marginBottom: 2,
                                     }}
                                 >
-                                    <ReactQuill
-                                        onChange={setValueNote}
-                                        value={valueNote}
-                                    />
-                                </Box>
+                                    Xem thông tin {colDef.headerName}
+                                </DialogContentText>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 5,
+                                        paddingLeft: 2,
+                                    }}
+                                >
+                                    <div>
+                                        <h5>Địa điểm phỏng vấn</h5>
+                                        <TextField
+                                            sx={{
+                                                m: 1,
+                                                width: '80%',
+                                            }}
+                                            disabled
+                                            value={address}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <h5>Thời gian phỏng vấn</h5>
+                                        <TimeField
+                                            disabled
+                                            sx={{ m: 1 }}
+                                            label="Nhập thời gian phỏng vấn"
+                                            value={time}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <h5>Hình thức phỏng vấn</h5>
+                                        <Autocomplete
+                                            disabled
+                                            sx={{ m: 1 }}
+                                            disablePortal
+                                            id="combo-box-contract"
+                                            options={[
+                                                'Trực tiếp',
+                                                'Meeting',
+                                                'Call',
+                                            ]}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    label="Chọn hình thức"
+                                                />
+                                            )}
+                                            value={type}
+                                        />
+                                    </div>
+                                </div>
                             </DialogContent>
                             <DialogActions>
                                 <Button
                                     variant="outlined"
                                     onClick={() => {
-                                        setEditNote(false);
+                                        setViewCell(false);
                                     }}
                                 >
                                     Quay lại
                                 </Button>
-                                <Button
-                                    variant="contained"
-                                    onClick={() => {
-                                        params.api.setEditCellValue(
-                                            {
-                                                id: params.id,
-                                                field: 'note',
-                                                value: valueNote,
-                                            },
-                                            params.id,
-                                        );
-
-                                        setRowModesModel(
-                                            (prevRowModesModel) => {
-                                                return {
-                                                    ...prevRowModesModel,
-                                                    [params.id]: {
-                                                        mode: GridRowModes.View,
-                                                        field: 'status',
-                                                        cellToFocusAfter:
-                                                            'right',
-                                                    },
-                                                };
-                                            },
-                                        );
-
-                                        setEditNote(false);
-                                    }}
-                                >
-                                    Lưu
-                                </Button>
                             </DialogActions>
                         </Dialog>
-                    </div>
+                    );
+                }
+
+                return (
+                    <ButtonStyle
+                        onClick={() => {
+                            setViewCell(true);
+                        }}
+                        sx={{
+                            width: '100%',
+                        }}
+                        variant={
+                            status === 'Từ chối' && field === 'note'
+                                ? 'contained'
+                                : 'outlined'
+                        }
+                        color={
+                            status === 'Từ chối' && field === 'note'
+                                ? 'warning'
+                                : 'info'
+                        }
+                    >
+                        Xem
+                    </ButtonStyle>
                 );
             };
 
@@ -1026,7 +1449,7 @@ export default function Post() {
                 {
                     field: 'amount',
                     headerName: 'Số lượng',
-                    flex: 1,
+                    flex: 2,
                     renderCell: renderCell,
                 },
                 {
@@ -1095,15 +1518,17 @@ export default function Post() {
                     renderCell: renderCellTextForm,
                 },
                 {
-                    field: 'benchmarkJobDTO',
-                    headerName: 'Tiêu chí',
+                    field: 'interviewInfoDTO',
+                    headerName: 'Phỏng vấn',
                     flex: 1,
-                    renderCell: renderCellTextForm,
+                    renderCell: (params) => (
+                        <RenderTextFormInterView params={params} />
+                    ),
                 },
                 {
                     field: 'status',
                     headerName: 'Trạng thái',
-                    flex: 2,
+                    flex: 1,
                     editable: true,
                     renderCell: renderCell,
                     type: 'singleSelect',
@@ -1130,8 +1555,7 @@ export default function Post() {
                         const isInEditMode =
                             rowModesModel[id]?.mode === GridRowModes.Edit;
 
-                        const row = rows.find((row) => row.postApplyId === id);
-
+                        const row = rows.find((r) => r.id === id);
                         if (isInEditMode) {
                             return [
                                 <Tooltip title="Lưu" key={'save'}>
@@ -1164,48 +1588,33 @@ export default function Post() {
                                 <GridActionsCellItem
                                     icon={<Preview />}
                                     label="preview"
-                                    // onClick={handleDeleteClick(id)}
-                                    color="inherit"
-                                />
-                            </Tooltip>,
-                            <Tooltip title="Xóa" key={'delete'}>
-                                <GridActionsCellItem
-                                    icon={<DeleteIcon />}
-                                    label="delete"
-                                    onClick={() => setOpenConfirmDelete(true)}
-                                    color="inherit"
-                                />
-                                <AlertDialogModal
-                                    openDialog={[
-                                        openConfirmDelete,
-                                        setOpenConfirmDelete,
-                                    ]}
-                                    onButtonClick={(value) =>
-                                        handleConfirmRemoveClick(value, id)
-                                    }
-                                />
-                            </Tooltip>,
-                            <Tooltip title="Chỉnh sửa" key={'edit1'}>
-                                <GridActionsCellItem
-                                    icon={<EditIcon />}
-                                    label="edit"
                                     onClick={() => {
-                                        setOpenWarningEditStatus(true);
+                                        setOpenDetails(true);
+                                        setIdRef(id);
                                     }}
                                     color="inherit"
                                 />
-                                <AlertDialogModal
-                                    openDialog={[
-                                        openWarningEditStatus,
-                                        setOpenWarningEditStatus,
-                                    ]}
-                                    onButtonClick={(value) =>
-                                        handleWarningEditClick(value, id)
-                                    }
-                                    status="error"
-                                    content="Mọi thay đổi sẽ không được thực hiện lại. Hãy chắc chắn!"
-                                    messageError="Đồng ý"
-                                />
+                                {idRef === id && openDetails && (
+                                    <RenderSubmit
+                                        open={openDetails}
+                                        post={rows.find(
+                                            (row) => row.postApplyId === id,
+                                        )}
+                                    />
+                                )}
+                            </Tooltip>,
+                            <Tooltip title="Chỉnh sửa" key={'edit1'}>
+                                <div>
+                                    <AlertDialogModalNested
+                                        icon={<EditIcon />}
+                                        maxWidth="sm"
+                                        onButtonClick={(value) =>
+                                            handleWarningEditClick(value, id)
+                                        }
+                                        status="warning"
+                                        content="Mọi thay đổi sẽ không được thực hiện lại. Hãy chắc chắn!"
+                                    />
+                                </div>
                             </Tooltip>,
                         ];
 
@@ -1507,7 +1916,7 @@ export default function Post() {
 
         const getPosts = async () => {
             try {
-                const response = await postsApi(requestAuth);
+                const response = await postsAllApi(requestAuth);
 
                 const status = response.status;
 
@@ -1549,7 +1958,7 @@ export default function Post() {
 
                 let valueTab;
                 if (tabFilter === 'wait-approve') {
-                    valueTab = 'Đang chờ';
+                    valueTab = 'Đang chờ duyệt';
                 }
                 if (tabFilter === 'signed') {
                     valueTab = 'Đã duyệt';
@@ -1628,14 +2037,7 @@ export default function Post() {
                 initialState={{
                     filter: {
                         filterModel: {
-                            items: [
-                                {
-                                    id: 1,
-                                    field: 'name',
-                                    operator: 'contains',
-                                    value: 'DG',
-                                },
-                            ],
+                            items: [],
                             quickFilterLogicOperator: GridLogicOperator.Or,
                         },
                     },

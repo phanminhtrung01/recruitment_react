@@ -28,7 +28,9 @@ import Recored from './pages/RecruitmentStudent/record';
 
 import RequireAuth from './components/RequireAuth';
 import RequireAuthEnterprise from './components/RequireAuthEnterprise';
-import RequireAuthEnterpriseStudent from './components/RequireAuthEnterpriseStudent';
+import RequireAuthStudent from './components/RequireAuthEnterpriseStudent';
+import Statistical from './pages/RecruitmentEnterprise/statistical';
+import CandidateEnterpeise from './pages/RecruitmentEnterprise/candidate';
 
 function App() {
     const cx = classNames.bind(styles);
@@ -51,6 +53,11 @@ function App() {
                         path="login/student"
                         element={<LoginEnterprise roleName="STUDENT" />}
                     />
+
+                    <Route
+                        path="login/admin"
+                        element={<LoginEnterprise roleName="ADMIN" />}
+                    />
                 </Route>
                 <Route path="register" element={<Register />} />
 
@@ -65,7 +72,7 @@ function App() {
                             />
                             <Route path="candidate" element={<Candidate />} />
                             <Route path="post" element={<PostManager />} />
-                            <Route path="notifier" element={<Notifier />} />
+                            <Route path="statistical" element={<Notifier />} />
                         </Route>
                     </Route>
 
@@ -78,13 +85,21 @@ function App() {
                             <Route path="test" element={<Test />} />
                             <Route path="post" element={<Post />} />
                             <Route path="posts" element={<Posts />} />
+                            <Route
+                                path="candidate"
+                                element={<CandidateEnterpeise />}
+                            />
+                            <Route
+                                path="statistical"
+                                element={<Statistical />}
+                            />
                         </Route>
                     </Route>
 
                     {/* Private Student routes */}
                     <Route path="student" element={<StudentLayout />}>
-                        <Route path="jobs" element={<Jobs />} />
-                        <Route element={<RequireAuthEnterpriseStudent />}>
+                        <Route element={<RequireAuthStudent />}>
+                            <Route path="jobs" element={<Jobs />} />
                             <Route path="job" element={<Job />} />
                             <Route path="record" element={<Recored />} />
                         </Route>

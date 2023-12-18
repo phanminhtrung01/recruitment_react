@@ -5,12 +5,13 @@ const RequireAuthEnterprise = () => {
     const location = useLocation();
 
     const auth = useSelector((state) => state.auth.value);
-
-    return auth?.username ? (
+    const { roleDB, roleUI } = auth;
+    console.log('Training Center: ' + auth?.roleDB);
+    return roleUI === 'ADMIN' && roleDB === 'ADMIN' ? (
         <Outlet />
     ) : (
         <Navigate
-            to={auth?.role === 'MANAGER' ? '/' : '/'}
+            to={'../auth/login/admin'}
             state={{ from: location }}
             replace
         />

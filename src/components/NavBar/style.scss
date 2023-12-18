@@ -56,13 +56,14 @@ $job-image: '../../access/img/png/job.jpg';
 
 .Navbar > .nav-items > a:hover::before {
     width: 100%;
+    overflow-y: auto;
 }
 
 .Navbar > .nav-toggle {
     display: none;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1300px) {
     .Navbar > .nav-items {
         position: absolute;
         top: var(--height-header-enterprise);
@@ -70,7 +71,7 @@ $job-image: '../../access/img/png/job.jpg';
         flex-direction: column;
         background: #3b4da7;
         left: 0;
-        width: 100%;
+        width: 25%;
         z-index: 9998;
         transform: translateX(-100%);
         transition: all 0.45s;

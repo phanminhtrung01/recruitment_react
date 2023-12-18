@@ -642,3 +642,47 @@
                     return row;
                 }
             });
+
+
+
+//! MAP TEST_AND_TEST
+const DataGridTests = (props) => {
+                const { idsTest } = props;
+                const [rowsTestExam, setRowsTestExam] = useState([]);
+
+                const getTestsExam = async (ids) => {
+                    try {
+                        const response = await getTestsExamByIdsApi(
+                            requestAuth,
+                            ids,
+                        );
+                        const code = response.code;
+                        const data = response.data;
+
+                        if (code === 200) {
+                            setRowsTestExam(data);
+                        }
+                    } catch (error) {
+                        console.log('GET_TESTS_ERROR');
+                    }
+                };
+
+                const columns = [
+                    {
+                        field: 'name',
+                        headerName: 'Tên bài thi',
+                        flex: 2,
+                        renderCell: renderCell,
+                    },
+                    {
+                        field: 'time',
+                        headerName: 'Thời gian qui định',
+                        flex: 2,
+                        renderCell: renderCell,
+                    },
+                ];
+
+                useEffect(() => {
+                    getTestsExam(idsTest);
+                }, [idsTest]);
+            };

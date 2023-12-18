@@ -16,13 +16,18 @@ import {
     setJobAll,
     setContractDetails,
     setApply,
+    setClassesPostStudent,
 } from '../../redux/jobSlice';
 import {
+    authInfoApi,
     getApplyByStudentAndPostApi,
+    getClassesByPostApplyAndStudentApi,
     getContractDetailsByPostApplyApi,
 } from '../../api/auth';
 import { useDispatch, useSelector } from 'react-redux';
 import useRequestAuth from '../../hooks/useRequestAuth';
+import { useEffect, useState } from 'react';
+import { updateAll } from '../../redux/infoUserSlice';
 
 const JobItem = ({ job, jobs }) => {
     const cx = classNames.bind(style);
@@ -30,6 +35,26 @@ const JobItem = ({ job, jobs }) => {
     const { contractDetails, apply } = useSelector((state) => state.job.value);
     const requestAuth = useRequestAuth();
     const { nameJob, salary, gender, workAddress, dateExpired, viewed } = job;
+    const [mount, setMount] = useState(false);
+    const { info } = useSelector((state) => state.infoUser?.value);
+    const studentId = info?.studentId;
+
+    useEffect(() => {
+        const getInfo = async () => {
+            const response = await authInfoApi(requestAuth);
+
+            if (response?.status === 200) {
+                dispatch(updateAll(response.data));
+
+                return response.data;
+            }
+        };
+
+        if (!info && !mount) {
+            getInfo();
+            setMount(true);
+        }
+    }, [info, mount]);
 
     const getContractDetailsByPostApply = async () => {
         try {
@@ -47,6 +72,25 @@ const JobItem = ({ job, jobs }) => {
             }
         } catch (e) {
             console.log('CONTRACT_DETAIL_ERROR');
+        }
+    };
+
+    const getClassByPostApplyAndStudent = async (studentId) => {
+        try {
+            const response = await getClassesByPostApplyAndStudentApi(
+                requestAuth,
+                job.postApplyId,
+                studentId,
+            );
+
+            const status = response?.status;
+            const data = response?.data;
+
+            if (status === 200) {
+                dispatch(setClassesPostStudent(data));
+            }
+        } catch (e) {
+            console.log('CLASS_POST_STUDENT_ERROR');
         }
     };
 
@@ -72,12 +116,13 @@ const JobItem = ({ job, jobs }) => {
         <div
             className={cx('job-item')}
             onMouseEnter={() => {
-                if (contractDetails.jobId !== job.postApplyId) {
+                if (contractDetails?.jobId !== job.postApplyId) {
                     getContractDetailsByPostApply();
                 }
 
                 if (!apply || apply.post?.postApplyId !== job.postApplyId) {
                     getApplyByPostApply();
+                    getClassByPostApplyAndStudent();
                 }
             }}
         >
@@ -241,7 +286,7 @@ const JobItem = ({ job, jobs }) => {
                                     height: '100%',
                                 }}
                                 variant="outlined"
-                                onClick={() => {
+                                onClick={async () => {
                                     dispatch(setJob(job));
                                     const jobsUtilJobCurrent = jobs.filter(
                                         (job1) =>
@@ -249,6 +294,20 @@ const JobItem = ({ job, jobs }) => {
                                             job.postApplyId,
                                     );
                                     dispatch(setJobAll(jobsUtilJobCurrent));
+                                    try {
+                                        const response = await requestAuth.post(
+                                            '/view_post/add_by_post',
+                                            {
+                                                params: {
+                                                    studentId: studentId,
+                                                    postId: job.postApplyId,
+                                                },
+                                            },
+                                        );
+                                        console.log(response.data);
+                                    } catch (error) {
+                                        console.log('STUDENT_VIEWPOST_ERROR');
+                                    }
                                 }}
                             >
                                 Chi tiết

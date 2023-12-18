@@ -7,8 +7,8 @@ const initialState = {
         contract: {},
         data: {
             nameJob: '',
-            datePost: dayjs().format('DD/MM/YYYY'),
-            dateExpire: '',
+            datePost: dayjs(),
+            dateExpire: dayjs().add(1, 'day'),
             viewed: 0,
             submitted: 0,
             gender: '',
@@ -25,9 +25,10 @@ const initialState = {
                 email: '',
                 phoneNumber: '',
             },
-            benchmarkJobDTO: {
-                minMark: '',
-                maxMark: '',
+            interviewInfoDTO: {
+                location: '',
+                time: '',
+                type: '',
             },
         },
         isMerge: true,
@@ -98,8 +99,8 @@ const postApplySlice = createSlice({
         updateContactJobDTO: (state, action) => {
             state.value.data.contactJobDTO = action.payload;
         },
-        updateBenchmarkJobDTO: (state, action) => {
-            state.value.data.benchmarkJobDTO = action.payload;
+        updateInterviewInfoDTO: (state, action) => {
+            state.value.data.interviewInfoDTO = action.payload;
         },
         resetPostApply: (state) => {
             state.value = initialState.value;
@@ -126,7 +127,7 @@ export const {
     updateDescription,
     updateRequired,
     updateContactJobDTO,
-    updateBenchmarkJobDTO,
+    updateInterviewInfoDTO,
     resetPostApply,
     updateBenefit,
     changeAmountByContractDetailsId,

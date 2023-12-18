@@ -4,14 +4,16 @@ import useRefreshToken from './useRefreshToken';
 import { useSelector, useDispatch } from 'react-redux';
 import { calculateHMAC } from '../hooks/useHMAC';
 import Cookies from 'js-cookie';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { setAccessToken } from '../redux/authSlice';
 
 function useRequestAuth() {
+    const dispatch = useDispatch();
+    const location = useLocation();
     const navigate = useNavigate();
     const refresh = useRefreshToken();
-    const { role, accessToken } = useSelector((state) => state.auth.value);
-    const dispatch = useDispatch();
+    const auth = useSelector((state) => state.auth.value);
+    const { roleDB, roleUI, accessToken } = auth;
 
     useEffect(() => {
         const requestIntercept = requestAuth.interceptors.request.use(
@@ -19,27 +21,37 @@ function useRequestAuth() {
                 if (!config.headers['Authorization']) {
                     config.headers['Authorization'] = `Bearer ${accessToken}`;
 
-                    let newAccessToken = accessToken;
+                    console.log('Bearer: ' + accessToken);
                     let pathRole;
-                    if (!newAccessToken) {
-                        newAccessToken = await refresh();
-                        dispatch(setAccessToken(newAccessToken));
-                    }
-
-                    if (!newAccessToken) {
-                        if (role === 'ENTERPRISE') {
+                    if (!accessToken) {
+                        if (
+                            roleDB === 'ENTERPRISE' ||
+                            roleUI === 'ENTERPRISE'
+                        ) {
                             pathRole = 'enterprise';
-                        } else if (role === 'STUDENT') {
+                        } else if (
+                            roleDB === 'STUDENT' ||
+                            roleUI === 'STUDENT'
+                        ) {
                             pathRole = 'student';
                         }
-                        navigate(`/auth/login/${pathRole}`, { replace: true });
+                        if (pathRole) {
+                            navigate(`/auth/login/${pathRole}`, {
+                                state: { from: location },
+                                replace: true,
+                            });
+                        } else {
+                            navigate('/', {
+                                replace: true,
+                            });
+                        }
                     }
 
-                    Cookies.set('data', calculateHMAC(newAccessToken), {
+                    Cookies.set('data', calculateHMAC(accessToken), {
                         path: '/',
                     });
 
-                    Cookies.set('at', newAccessToken, {
+                    Cookies.set('at', accessToken, {
                         path: '/',
                     });
                 }
@@ -58,6 +70,7 @@ function useRequestAuth() {
 
                 if (error?.response && status === 406 && !prevRequest?.sent) {
                     prevRequest.sent = true;
+                    console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaa');
                     const newAccessToken = await refresh();
 
                     prevRequest.headers[

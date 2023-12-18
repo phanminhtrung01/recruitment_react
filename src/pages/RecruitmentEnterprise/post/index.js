@@ -103,7 +103,7 @@ import {
     updateDescription,
     updateRequired,
     updateContactJobDTO,
-    updateBenchmarkJobDTO,
+    updateInterviewInfoDTO,
     resetPostApply,
     changeAmountByContractDetailsId,
     updateBenefit,
@@ -116,6 +116,7 @@ import checkObjectUndefined from '../../../hooks/useObjectUndefined';
 import { Toaster, toast } from 'sonner';
 import NotifierSnackbar from '../../../components/Notification/notifier-error';
 import { useNavigate } from 'react-router-dom';
+import { TimeField } from '@mui/x-date-pickers';
 function Post() {
     const requestAuth = useRequestAuth();
     const dispatch = useDispatch();
@@ -126,6 +127,7 @@ function Post() {
     const [contract, setContract] = useState(null);
     const followAddressRef = useRef(false);
     const followTimeRef = useRef(false);
+    const addressRef = useRef('');
     const salaryMinRef = useRef({
         name: 'min',
         value: 5000000,
@@ -141,10 +143,6 @@ function Post() {
     const phoneRef = useRef('');
     const emailRef = useRef('');
 
-    const minMarkRef = useRef(7);
-    const maxMarkRef = useRef(10);
-    const jobsWorkedRef = useRef([]);
-
     const textEditerJobDescriptionRef = useRef('');
     const textEditerJobRequirementsRef = useRef('');
     const textEditerJobBenefitsRef = useRef('');
@@ -154,12 +152,14 @@ function Post() {
     const [radioGroupRegister, setRadioGroupRegister] = useState('single');
 
     const handleSubmit = async (postApply, e) => {
+        const DEFAULT_DATE_FORMAT = 'DD/MM/YYYY';
         e.preventDefault();
 
-        const { data, positions, isMerge } = postApply;
+        const { data, positions, contract, isMerge } = postApply;
         const dataRequest = [];
         positions.forEach((pos) => {
             const { amount, contractDetailsId } = pos;
+            const { contractId } = contract;
             const {
                 nameJob,
                 datePost,
@@ -174,13 +174,13 @@ function Post() {
                 age,
                 gender,
                 contactJobDTO,
-                benchmarkJobDTO,
+                interviewInfoDTO,
             } = data;
 
             const dataFormat = {
                 nameJob: nameJob,
-                datePost: datePost,
-                dateExpire: dateExpire,
+                datePost: dayjs(datePost).format(DEFAULT_DATE_FORMAT),
+                dateExpire: dayjs(dateExpire).format(DEFAULT_DATE_FORMAT),
                 submitted: submitted,
                 viewed: viewed,
                 salary: salary,
@@ -191,7 +191,7 @@ function Post() {
                 age: age,
                 gender: gender,
                 contactJobDTO: contactJobDTO,
-                benchmarkJobDTO: benchmarkJobDTO,
+                interviewInfoDTO: interviewInfoDTO,
                 recordId: contractDetailsId,
                 amount: amount,
                 isMerge: isMerge,
@@ -213,6 +213,8 @@ function Post() {
                 setTimeout(() => {
                     navigate('../posts', { replace: true });
                 }, 2500);
+
+                dispatch(resetPostApply());
                 return NotifierSnackbar({
                     title: 'Thành công ',
                     sub1: 'Đăng ký tin tuyển dụng thành công!',
@@ -222,8 +224,6 @@ function Post() {
                 });
             },
             error: (e) => {
-                console.log(e);
-
                 const responseErr = e?.response.data;
                 const code = e.code;
                 let message;
@@ -302,7 +302,6 @@ function Post() {
                     }}
                     inputRef={ref}
                     onAccept={(value) => {
-                        console.log(value);
                         onChange({
                             target: { name: props.name, value },
                         });
@@ -320,113 +319,23 @@ function Post() {
 
         console.log('RecruitmentTabs', 11);
 
-        function InfoRecruitmentTabPanel() {
-            const { nameJob } = useSelector(
-                (state) => state.postApply.value.data,
-            );
-
-            const { info } = useSelector((state) => state.infoUser.value);
-            const postApply = useSelector((state) => state.postApply.value);
-            const { data } = postApply;
-            const { dateExpire } = data;
-
-            const [filterLevel, setFilterLevel] = useState('');
-            const [endDate, setEndDateJob] = useState(dateExpire);
+        function AddressRender(props) {
+            const { getValue = (value) => {} } = props;
             const [province, setProvince] = useState(null);
             const [district, setDistrict] = useState(null);
             const [ward, setWard] = useState(null);
-            const [address, setAddress] = useState(info?.address);
-
-            const toolbarOptions = useMemo(() => {
-                return [
-                    ['bold', 'italic', 'underline', 'strike'],
-                    ['blockquote', 'code-block'],
-
-                    [{ header: 1 }, { header: 2 }],
-                    [{ list: 'ordered' }, { list: 'bullet' }],
-                    [{ script: 'sub' }, { script: 'super' }],
-                    [{ indent: '-1' }, { indent: '+1' }],
-                    [{ direction: 'rtl' }],
-
-                    [{ size: ['small', false, 'large', 'huge'] }],
-                    [{ header: [1, 2, 3, 4, 5, 6, false] }],
-
-                    [{ color: [] }, { background: [] }],
-                    [{ font: [] }],
-                    [{ align: [] }],
-
-                    ['link', 'image'],
-
-                    ['clean'],
-                ];
-            }, []);
-
-            const [currency, setCurrency] = useState('vnd');
-            const [isChangeCurrency, setIsChangeCurrency] = useState(false);
-
-            const [fromAge, setFromAge] = useState(fromAgeRef.current);
-            const [toAge, setToAge] = useState(toAgeRef.current);
+            const { info } = useSelector((state) => state.infoUser.value);
+            const [address, setAddress] = useState(addressRef.current);
 
             const [followAddress, setFollowAddress] = useState(
                 followAddressRef.current,
             );
 
-            const [followTime, setFollowTime] = useState(followTimeRef.current);
-
-            const [radioGroupGender, setRadioGroupGender] = useState(
-                radioGenderRef.current,
-            );
-
-            const updateMinSalaryRef = useRef();
-            const updateMaxSalaryRef = useRef();
-
-            const handleChangeFilterLevel = (event) => {
-                setFilterLevel(event.target.value);
-            };
-
             const handleCheckFollowAddress = () => {
                 setFollowAddress(!followAddress);
             };
-            const handleCheckFollowTime = () => {
-                setFollowTime(!followTime);
-            };
 
-            const handleChangeRadioGender = (event) => {
-                setRadioGroupGender(event.target.value);
-            };
-
-            // const handleChangeMinSalary = (event) => {
-            //     setMinSalary(event.target.value);
-            // };
-
-            // const handleChangeMaxSalary = (event) => {
-            //     setMaxSalary(event.target.value);
-            // };
-
-            const handleFromAgeChange = (event) => {
-                setFromAge(event.target.value);
-            };
-
-            const handleToAgeChange = (event) => {
-                setToAge(event.target.value);
-            };
-
-            const handleEndDateChange = (newValue) => {
-                setEndDateJob(newValue);
-            };
-
-            const [jobDescription, setJobDescription] = useState(
-                textEditerJobDescriptionRef.current,
-            );
-
-            const [jobRequirements, setJobRequirements] = useState(
-                textEditerJobRequirementsRef.current,
-            );
-            const [jobBenefits, setJobBenefits] = useState(
-                textEditerJobBenefitsRef.current,
-            );
-
-            function ProvinceSelectLazy({ delay, props }) {
+            function ProvinceSelectLazy({ delay }) {
                 const [open, setOpen] = useState(false);
                 const [options, setOptions] = useState([]);
                 const [inputProvince, setInputProvince] = useState('');
@@ -442,7 +351,6 @@ function Post() {
                             );
                             const provinces = await response.json();
 
-                            console.log('valueInput:', provinces);
                             setOptions(
                                 provinces.map((provincePar) => {
                                     const province = {
@@ -562,10 +470,6 @@ function Post() {
                     }
                 }, [open]);
 
-                useEffect(() => {
-                    console.log('d:', options);
-                }, [options]);
-
                 return (
                     <Autocomplete
                         id="district-select-lazy"
@@ -660,10 +564,6 @@ function Post() {
                     }
                 }, [open]);
 
-                useEffect(() => {
-                    console.log('w:', options);
-                }, [options]);
-
                 return (
                     <Autocomplete
                         id="ward-select-lazy"
@@ -717,6 +617,230 @@ function Post() {
                     />
                 );
             }
+
+            useEffect(() => {
+                setDistrict(null);
+            }, [province]);
+
+            useEffect(() => {
+                setWard(null);
+            }, [district]);
+            useEffect(() => {}, [ward]);
+
+            useEffect(() => {
+                if (ward && district && province) {
+                    const addressArr = [
+                        ward?.name,
+                        district?.name,
+                        province?.name,
+                    ];
+                    setAddress(addressArr.join(', '));
+                }
+            }, [ward, district, province]);
+
+            useEffect(() => {
+                addressRef.current = address;
+                getValue(addressRef.current);
+            }, [address]);
+
+            useEffect(() => {
+                if (followAddress) {
+                    setAddress(info?.address);
+                    setProvince(null);
+                }
+                followAddressRef.current = followAddress;
+            }, [followAddress]);
+
+            return (
+                <>
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContain: 'center',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <Checkbox
+                            title="Tự động cập nhật theo địa chỉ công ty"
+                            color="success"
+                            checked={followAddress}
+                            onChange={() => handleCheckFollowAddress()}
+                        />
+                        <span
+                            style={{
+                                fontSize: '1.2rem',
+                            }}
+                        >
+                            Theo địa chỉ mặc định công ty
+                            <Tippy content="Theo khoa hoc nha">
+                                <span> (*)</span>
+                            </Tippy>
+                        </span>
+                    </div>
+                    <Collapse in={!followAddress} timeout="auto" sx={{ m: 1 }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                gap: '50px',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    flex: 1,
+                                }}
+                            >
+                                <h5>Tỉnh/Thành phố</h5>
+                                <ProvinceSelectLazy delay={1000} />
+                            </div>
+                            <div
+                                style={{
+                                    flex: 1,
+                                }}
+                            >
+                                <h5>Quận/Huyện</h5>
+                                <DistrictSelect />
+                            </div>
+                            <div
+                                style={{
+                                    flex: 1,
+                                }}
+                            >
+                                <h5>Phường/Xã</h5>
+                                <WardSelect />
+                            </div>
+                        </div>
+                    </Collapse>
+
+                    <div>
+                        <h5>Địa chỉ</h5>
+                        <TextField
+                            disabled={true}
+                            label="Địa chỉ làm việc"
+                            sx={{
+                                m: 1,
+                                width: '80%',
+                                maxWidth: '600px',
+                            }}
+                            value={address}
+                            InputProps={{
+                                endAdornment: (
+                                    <Fragment>
+                                        <IconButton
+                                            aria-label="expand row"
+                                            size="small"
+                                            disabled={
+                                                info?.address || !followAddress
+                                            }
+                                            onClick={async () => {
+                                                const info = await getInfo();
+                                                setAddress(info.info.address);
+                                            }}
+                                        >
+                                            <RefreshOutlined />
+                                        </IconButton>
+                                    </Fragment>
+                                ),
+                            }}
+                        />
+                    </div>
+                </>
+            );
+        }
+
+        function InfoRecruitmentTabPanel() {
+            const { nameJob } = useSelector(
+                (state) => state.postApply.value.data,
+            );
+
+            const postApply = useSelector((state) => state.postApply.value);
+            const { data } = postApply;
+            const { dateExpire } = data;
+
+            const [filterLevel, setFilterLevel] = useState('');
+            const [endDate, setEndDateJob] = useState(dateExpire);
+
+            const toolbarOptions = useMemo(() => {
+                return [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+
+                    [{ header: 1 }, { header: 2 }],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    [{ script: 'sub' }, { script: 'super' }],
+                    [{ indent: '-1' }, { indent: '+1' }],
+                    [{ direction: 'rtl' }],
+
+                    [{ size: ['small', false, 'large', 'huge'] }],
+                    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+
+                    [{ color: [] }, { background: [] }],
+                    [{ font: [] }],
+                    [{ align: [] }],
+
+                    ['link', 'image'],
+
+                    ['clean'],
+                ];
+            }, []);
+
+            const [currency, setCurrency] = useState('vnd');
+            const [isChangeCurrency, setIsChangeCurrency] = useState(false);
+
+            const [fromAge, setFromAge] = useState(fromAgeRef.current);
+            const [toAge, setToAge] = useState(toAgeRef.current);
+
+            const [followTime, setFollowTime] = useState(followTimeRef.current);
+
+            const [radioGroupGender, setRadioGroupGender] = useState(
+                radioGenderRef.current,
+            );
+
+            const updateMinSalaryRef = useRef();
+            const updateMaxSalaryRef = useRef();
+
+            const handleChangeFilterLevel = (event) => {
+                setFilterLevel(event.target.value);
+            };
+
+            const handleCheckFollowTime = () => {
+                setFollowTime(!followTime);
+            };
+
+            const handleChangeRadioGender = (event) => {
+                setRadioGroupGender(event.target.value);
+            };
+
+            // const handleChangeMinSalary = (event) => {
+            //     setMinSalary(event.target.value);
+            // };
+
+            // const handleChangeMaxSalary = (event) => {
+            //     setMaxSalary(event.target.value);
+            // };
+
+            const handleFromAgeChange = (event) => {
+                setFromAge(event.target.value);
+            };
+
+            const handleToAgeChange = (event) => {
+                setToAge(event.target.value);
+            };
+
+            const handleEndDateChange = (newValue) => {
+                setEndDateJob(newValue);
+            };
+
+            const [jobDescription, setJobDescription] = useState(
+                textEditerJobDescriptionRef.current,
+            );
+
+            const [jobRequirements, setJobRequirements] = useState(
+                textEditerJobRequirementsRef.current,
+            );
+            const [jobBenefits, setJobBenefits] = useState(
+                textEditerJobBenefitsRef.current,
+            );
 
             const NumericFormatCustom = forwardRef((props, ref) => {
                 const { onChange, ...other } = props;
@@ -871,7 +995,7 @@ function Post() {
                         ? name.split('-')[1]
                         : name.split('-')[0],
                 );
-                console.log(onlyNames);
+
                 let nameLevel;
                 if (filterLevel === 'intern') {
                     nameLevel = 'Thực tập sinh';
@@ -899,12 +1023,6 @@ function Post() {
             useEffect(() => {
                 updateMinSalaryRef.current.updateSalary(currency);
                 updateMaxSalaryRef.current.updateSalary(currency);
-                // dispatch(
-                //     updateSalary([
-                //         updateMinSalaryRef.current,
-                //         updateMaxSalaryRef.current,
-                //     ]),
-                // );
             }, [currency]);
 
             useEffect(() => {
@@ -923,16 +1041,14 @@ function Post() {
             }, [jobBenefits]);
 
             useEffect(() => {
-                if (followAddress) {
-                    setAddress(info?.address);
-                    setProvince(null);
-                }
-                followAddressRef.current = followAddress;
-            }, [followAddress]);
-
-            useEffect(() => {
                 if (followTime) {
-                    setEndDateJob(dayjs(contract?.effectiveDate));
+                    if (contract) {
+                        setEndDateJob(
+                            dayjs(contract.terminationDate, 'DD/MM/YYYY'),
+                        );
+                    } else {
+                        setEndDateJob(dayjs().add(1, 'day'));
+                    }
                 }
                 followTimeRef.current = followTime;
             }, [followTime]);
@@ -940,9 +1056,7 @@ function Post() {
             useEffect(() => {
                 dispatch(
                     updateDateExpire(
-                        endDate
-                            ? dayjs(endDate)?.format('DD/MM/YYYY')
-                            : dayjs().add(1, 'day').format('DD/MM/YYYY'),
+                        endDate ? dayjs(endDate) : dayjs().add(1, 'day'),
                     ),
                 );
             }, [endDate]);
@@ -969,7 +1083,6 @@ function Post() {
 
             useEffect(() => {
                 fromAgeRef.current = fromAge;
-                setToAge(+fromAge + 1);
             }, [fromAge]);
 
             useEffect(() => {
@@ -977,30 +1090,9 @@ function Post() {
             }, [toAge]);
 
             useEffect(() => {
-                setDistrict(null);
-            }, [province]);
-
-            useEffect(() => {
-                setWard(null);
-            }, [district]);
-            useEffect(() => {}, [ward]);
-
-            useEffect(() => {
-                if (ward && district && province) {
-                    const addressArr = [
-                        ward?.name,
-                        district?.name,
-                        province?.name,
-                    ];
-                    setAddress(addressArr.join(', '));
+                if (+fromAge >= +toAge) {
+                    setToAge(+fromAge + 1);
                 }
-            }, [ward, district, province]);
-
-            useEffect(() => {
-                dispatch(updateWorkAddress(address));
-            }, [address]);
-
-            useEffect(() => {
                 dispatch(updateAge([fromAge, toAge].join('-')));
             }, [fromAge, toAge]);
 
@@ -1061,7 +1153,7 @@ function Post() {
                                     flex: 1,
                                 }}
                             >
-                                <h5>Chức danh tuyển dụng</h5>
+                                <h5>Cấp bậc</h5>
                                 <FormControl sx={{ m: 1, width: 1 }}>
                                     <InputLabel id="demo-simple-select-label">
                                         Loại
@@ -1092,6 +1184,14 @@ function Post() {
                         <div className="job-description">
                             <h5>Mô tả công việc</h5>
                             <ReactQuill
+                                onKeyDown={(event) => {
+                                    if (
+                                        event.key === 'Enter' ||
+                                        event.key === 'Tab'
+                                    ) {
+                                        event.stopPropagation();
+                                    }
+                                }}
                                 theme="snow"
                                 value={jobDescription}
                                 onChange={setJobDescription}
@@ -1104,6 +1204,14 @@ function Post() {
                         <div className="job-requirements">
                             <h5>Yêu cầu công việc</h5>
                             <ReactQuill
+                                onKeyDown={(event) => {
+                                    if (
+                                        event.key === 'Enter' ||
+                                        event.key === 'Tab'
+                                    ) {
+                                        event.stopPropagation();
+                                    }
+                                }}
                                 theme="snow"
                                 value={jobRequirements}
                                 onChange={setJobRequirements}
@@ -1117,6 +1225,14 @@ function Post() {
                         <div className="job-requirements">
                             <h5>Quyền lợi</h5>
                             <ReactQuill
+                                onKeyDown={(event) => {
+                                    if (
+                                        event.key === 'Enter' ||
+                                        event.key === 'Tab'
+                                    ) {
+                                        event.stopPropagation();
+                                    }
+                                }}
                                 theme="snow"
                                 value={jobBenefits}
                                 onChange={setJobBenefits}
@@ -1217,109 +1333,11 @@ function Post() {
                                     justifyContain: 'center',
                                 }}
                             >
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        justifyContain: 'center',
-                                        alignItems: 'center',
+                                <AddressRender
+                                    getValue={(value) => {
+                                        dispatch(updateWorkAddress(value));
                                     }}
-                                >
-                                    <Checkbox
-                                        title="Tự động cập nhật theo địa chỉ công ty"
-                                        color="success"
-                                        checked={followAddress}
-                                        onChange={() =>
-                                            handleCheckFollowAddress()
-                                        }
-                                    />
-                                    <span
-                                        style={{
-                                            fontSize: '1.2rem',
-                                        }}
-                                    >
-                                        Theo địa chỉ mặc định công ty
-                                        <Tippy content="Theo khoa hoc nha">
-                                            <span> (*)</span>
-                                        </Tippy>
-                                    </span>
-                                </div>
-
-                                <Collapse
-                                    in={!followAddress}
-                                    timeout="auto"
-                                    sx={{ m: 1 }}
-                                >
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            gap: '50px',
-                                            alignItems: 'center',
-                                        }}
-                                    >
-                                        <div
-                                            style={{
-                                                flex: 1,
-                                            }}
-                                        >
-                                            <h5>Tỉnh/Thành phố</h5>
-                                            <ProvinceSelectLazy delay={1000} />
-                                        </div>
-                                        <div
-                                            style={{
-                                                flex: 1,
-                                            }}
-                                        >
-                                            <h5>Quận/Huyện</h5>
-                                            <DistrictSelect />
-                                        </div>
-                                        <div
-                                            style={{
-                                                flex: 1,
-                                            }}
-                                        >
-                                            <h5>Phường/Xã</h5>
-                                            <WardSelect />
-                                        </div>
-                                    </div>
-                                </Collapse>
-
-                                <div>
-                                    <h5>Địa chỉ</h5>
-                                    <TextField
-                                        disabled={true}
-                                        label="Địa chỉ làm việc"
-                                        sx={{
-                                            m: 1,
-                                            width: '80%',
-                                            maxWidth: '600px',
-                                        }}
-                                        value={address}
-                                        InputProps={{
-                                            endAdornment: (
-                                                <Fragment>
-                                                    <IconButton
-                                                        aria-label="expand row"
-                                                        size="small"
-                                                        disabled={
-                                                            info?.address ||
-                                                            !followAddress
-                                                        }
-                                                        onClick={async () => {
-                                                            const info =
-                                                                await getInfo();
-                                                            setAddress(
-                                                                info.info
-                                                                    .address,
-                                                            );
-                                                        }}
-                                                    >
-                                                        <RefreshOutlined />
-                                                    </IconButton>
-                                                </Fragment>
-                                            ),
-                                        }}
-                                    />
-                                </div>
+                                />
                             </div>
                         </div>
                         <div className="jobs-salary">
@@ -1616,149 +1634,105 @@ function Post() {
 
         function CandidateEvaluationTabPanel() {
             const postApply = useSelector((state) => state.postApply.value);
-            const [minMark, setMinMark] = useState(minMarkRef.current);
-            const [maxMark, setMaxMark] = useState(maxMarkRef.current);
-            const [selectedJobsWorked, setSelectedJobsWorked] = useState(
-                jobsWorkedRef.current,
-            );
+            const { contract, positions, data } = postApply;
+            const { contactJobDTO, interviewInfoDTO } = data;
+            const { locationR, timeR, typeR } = interviewInfoDTO;
 
-            const handleMinMarkChange = (event) => {
-                setMinMark(event.target.value);
+            const [address, setAddress] = useState(locationR);
+            const [time, setTime] = useState(timeR);
+            const [type, setType] = useState(typeR);
+
+            const checkContract = checkObjectUndefined(contract, ['note']);
+            const checkPositions = checkObjectUndefined(positions);
+            const checkData = checkObjectUndefined(data, [
+                'viewed',
+                'submitted',
+            ]);
+            const checkDataContact = checkObjectUndefined(contactJobDTO);
+            const checkDataInterview = checkObjectUndefined(interviewInfoDTO);
+
+            const check =
+                checkContract ||
+                checkPositions ||
+                checkDataContact ||
+                checkData ||
+                checkDataInterview;
+
+            const handleTimeChange = (value, context) => {
+                setTime(value);
             };
-
-            const handleMaxMarkChange = (event) => {
-                setMaxMark(event.target.value);
+            const handleTypeChange = (e, value) => {
+                setType(value);
             };
-
-            const handleJobsWorkedChange = (event, newValue) => {
-                setSelectedJobsWorked(newValue);
-            };
-
-            useEffect(() => {
-                minMarkRef.current = minMark;
-                setMaxMark(+minMark + 1);
-            }, [minMark]);
-
-            useEffect(() => {
-                maxMarkRef.current = maxMark;
-            }, [maxMark]);
 
             useEffect(() => {
                 dispatch(
-                    updateBenchmarkJobDTO({
-                        minMark: +minMark,
-                        maxMark: +maxMark,
+                    updateInterviewInfoDTO({
+                        location: address,
+                        time: dayjs(time).format('HH:mm:ss'),
+                        type: type,
                     }),
                 );
-            }, [minMark, maxMark]);
-
-            useEffect(() => {
-                jobsWorkedRef.current = selectedJobsWorked;
-            }, [selectedJobsWorked]);
+            }, [address, time, type]);
 
             return (
-                <>
+                <div
+                    style={{
+                        padding: 10,
+                    }}
+                >
                     <div
                         style={{
-                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContain: 'center',
+                            gap: 10,
                         }}
                     >
-                        <h4
-                            style={{
-                                marginTop: '10px',
-                                marginBottom: '10px',
-                                width: '100%',
-                                padding: '8px',
-                                textTransform: 'uppercase',
-                                backgroundColor: '#f0f3ba',
-                            }}
-                        >
-                            Độ phù hợp ứng viên
-                        </h4>
-
-                        <div
-                            className=""
-                            style={{
-                                padding: '5px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '15px',
-                            }}
-                        >
-                            <div
-                                className="job-mark"
-                                style={{
-                                    padding: '5px',
+                        <div>
+                            <h5>Địa điểm phỏng vấn</h5>
+                            <AddressRender
+                                getValue={(value) => {
+                                    //dispatch(updateWorkAddress(value));
+                                    setAddress(value);
                                 }}
+                            />
+                        </div>
+
+                        <div>
+                            <h5>Thời gian phỏng vấn</h5>
+                            <Tippy
+                                placement="auto-start"
+                                content="Chuyển đổi ngôn ngữ nhập US (United States)"
                             >
-                                <h5>Điểm</h5>
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        gap: '20px',
-                                    }}
-                                >
+                                <TimeField
+                                    sx={{ m: 1, width: '40%' }}
+                                    label="Nhập thời gian phỏng vấn"
+                                    onChange={handleTimeChange}
+                                    value={time}
+                                />
+                            </Tippy>
+                        </div>
+
+                        <div>
+                            <h5>Hình thức phỏng vấn</h5>
+                            <Autocomplete
+                                sx={{ m: 1, width: '30%' }}
+                                disablePortal
+                                id="combo-box-contract"
+                                options={['Trực tiếp', 'Meeting', 'Call']}
+                                renderInput={(params) => (
                                     <TextField
-                                        label="Từ"
-                                        type="number"
-                                        sx={{
-                                            m: 1,
-                                            width: '20%',
-                                        }}
-                                        inputProps={{
-                                            min: 0,
-                                            step: 1,
-                                            max: 10,
-                                            pattern: '\\d+',
-                                            onInput: function (e) {
-                                                let value = parseInt(
-                                                    e.target.value,
-                                                );
-                                                if (value < 0) value = 0;
-                                                if (value > 10) value = 10;
-                                                e.target.value = value
-                                                    .toString()
-                                                    .replace(/[^0-9]/g, '');
-                                            },
-                                        }}
-                                        value={minMark}
-                                        onChange={handleMinMarkChange}
+                                        {...params}
+                                        label="Chọn hình thức"
                                     />
-                                    <TextField
-                                        error={+minMark >= +maxMark}
-                                        helperText={
-                                            +minMark >= +maxMark
-                                                ? 'Nhập điểm lớn hơn'
-                                                : ''
-                                        }
-                                        label="Đến"
-                                        type="number"
-                                        sx={{
-                                            m: 1,
-                                            width: '20%',
-                                        }}
-                                        inputProps={{
-                                            min: 0,
-                                            step: 1,
-                                            max: 10,
-                                            pattern: '\\d+',
-                                            onInput: function (e) {
-                                                let value = parseInt(
-                                                    e.target.value,
-                                                );
-                                                value = Math.min(value, 10); // Giới hạn giá trị tối đa là 10
-                                                e.target.value = value
-                                                    .toString()
-                                                    .replace(/[^0-9]/g, '');
-                                            },
-                                        }}
-                                        value={maxMark}
-                                        onChange={handleMaxMarkChange}
-                                    />
-                                </div>
-                            </div>
+                                )}
+                                value={type}
+                                onChange={handleTypeChange}
+                            />
                         </div>
                     </div>
+
                     <div
                         style={{
                             padding: '15px',
@@ -1767,10 +1741,7 @@ function Post() {
                         }}
                     >
                         <Button
-                            disabled={checkObjectUndefined(postApply, [
-                                'viewed',
-                                'submitted',
-                            ])}
+                            disabled={check}
                             sx={{ width: '10%', fontSize: '1.2rem' }}
                             variant="contained"
                             color="success"
@@ -1782,7 +1753,7 @@ function Post() {
                             Tạo bài đăng
                         </Button>
                     </div>
-                </>
+                </div>
             );
         }
 
@@ -1833,7 +1804,7 @@ function Post() {
                         >
                             <StyledTab label="Thông Tin Tuyển Dụng" />
                             <StyledTab label="Thông Tin Liên Hệ" />
-                            <StyledTab label="Thông Tin Điểm Ứng Viên" />
+                            <StyledTab label="Thông Tin Phỏng Vấn" />
                         </Tabs>
                     </AppBar>
                 </div>
@@ -1887,7 +1858,7 @@ function Post() {
 
     const getContracts = async () => {
         try {
-            const response = await contractsApi(requestAuth);
+            const response = await contractsApi(requestAuth, 'Đã ký');
 
             const status = response.status;
             if (status === 200) {
@@ -1987,13 +1958,13 @@ function Post() {
 
         useEffect(() => {
             let dataRow = [];
-            jobsData.forEach((jobData) => {
+            selectedJobs.forEach((jobData) => {
                 const { contractDetailsId, position, amount } = jobData;
                 const data = {
                     id: contractDetailsId,
                     name: position.name,
                     amount: amount,
-                    amountEdit: 1,
+                    amountEdit: amount,
                 };
 
                 dataRow.push(data);
@@ -2089,7 +2060,6 @@ function Post() {
                             <TextField {...params} label="Chọn hợp đồng" />
                         )}
                         onOpen={(e) => {
-                            console.log('onOpen');
                             getContracts();
                         }}
                         value={contract}

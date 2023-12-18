@@ -20,9 +20,12 @@ const infoUserSlide = createSlice({
         updateInfo: (state, action) => {
             state.value.info = action.payload;
         },
+        resetInfoUser: (state) => {
+            state.value = initialState.value;
+        },
     },
 });
 
-export const { updateAll, updateUsername, updateRole, updateInfo } =
+export const { updateAll, updateUsername, updateRole, updateInfo, resetInfoUser } =
     infoUserSlide.actions;
 export default infoUserSlide.reducer;

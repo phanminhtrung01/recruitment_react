@@ -1,17 +1,23 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-    value: { username: '', role: '', accessToken: '' },
+    value: { username: '', roleUI: '', roleDB: '', accessToken: '' },
 };
 
 const authSlide = createSlice({
     name: 'auth',
     initialState: initialState,
     reducers: {
-        roleE: (state, action) => {
+        setRoleUI: (state, action) => {
             return {
                 ...state,
-                value: { ...state.value, role: action.payload },
+                value: { ...state.value, roleUI: action.payload },
+            };
+        },
+        setRoleDB: (state, action) => {
+            return {
+                ...state,
+                value: { ...state.value, roleDB: action.payload },
             };
         },
         loginE: (state, action) => {
@@ -23,8 +29,12 @@ const authSlide = createSlice({
                 value: { ...state.value, accessToken: action.payload },
             };
         },
+        resetAuth: (state) => {
+            state.value = initialState.value;
+        },
     },
 });
 
-export const { roleE, loginE, setAccessToken } = authSlide.actions;
+export const { setRoleUI, setRoleDB, loginE, setAccessToken, resetAuth } =
+    authSlide.actions;
 export default authSlide.reducer;

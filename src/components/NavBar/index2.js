@@ -1,11 +1,18 @@
 import Tippy from '@tippyjs/react/headless';
 import OneOption from '../TextButtonSingle';
 import { Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { roleE } from '../../redux/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { setRoleUI } from '../../redux/authSlice';
+import { Button, Divider } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { resetAuth } from '../../redux/authSlice';
+import { resetInfoUser } from '../../redux/infoUserSlice';
 
 function NavBarHome() {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const auth = useSelector((state) => state.auth.value);
+    const { username, accessToken, roleDB } = auth;
 
     return (
         <div
@@ -16,11 +23,6 @@ function NavBarHome() {
                 alignItems: 'center',
                 marginTop: '10px',
                 justifyContent: 'space-between',
-                // position: 'fixed',
-                // top: 80,
-                // left: 0,
-                // right: 0,
-                // zIndex: 999,
             }}
         >
             <div
@@ -29,33 +31,42 @@ function NavBarHome() {
                     display: 'flex',
                     fontSize: '20px',
                     fontWeight: 'bold',
+                    gap: 5,
                 }}
             >
-                <div
-                    style={{
-                        position: 'relative',
+                <Button
+                    variant="contained"
+                    sx={{
+                        fontSize: 16,
                     }}
-                    className="login-home"
                 >
                     Đăng nhập
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            bottom: 0,
-                            right: -10,
-                            borderLeft: '2px solid black',
-                        }}
-                    />
-                </div>
-                <div
-                    className="register-home"
-                    style={{
-                        marginLeft: '20px',
-                    }}
-                >
-                    Đăng ký
-                </div>
+                </Button>
+
+                {username && accessToken && roleDB === 'ADMIN' && (
+                    <div>
+                        <Divider
+                            orientation="vertical"
+                            variant="fullWidth"
+                            flexItem
+                        />
+                        <Button
+                            onClick={() => {
+                                navigate('/', {
+                                    replace: true,
+                                });
+                                dispatch(resetAuth());
+                                dispatch(resetInfoUser());
+                            }}
+                            variant="outlined"
+                            sx={{
+                                fontSize: 16,
+                            }}
+                        >
+                            Đăng xuất
+                        </Button>
+                    </div>
+                )}
             </div>
             <div className="action" style={{}}>
                 <OneOption text="Giới thiệu" />
@@ -143,7 +154,7 @@ function NavBarHome() {
                                 <Link
                                     to="/recruitment/contract"
                                     onClick={() => {
-                                        dispatch(roleE('MANAGER'));
+                                        dispatch(setRoleUI('ADMIN'));
                                     }}
                                 >
                                     <OneOption
@@ -156,7 +167,7 @@ function NavBarHome() {
                                 <Link
                                     to="recruitment/student/jobs"
                                     onClick={() => {
-                                        dispatch(roleE('STUDENT'));
+                                        dispatch(setRoleUI('STUDENT'));
                                     }}
                                 >
                                     <OneOption
@@ -170,7 +181,7 @@ function NavBarHome() {
                                 <Link
                                     to="recruitment/enterprise"
                                     onClick={() => {
-                                        dispatch(roleE('ENTERPRISE'));
+                                        dispatch(setRoleUI('ENTERPRISE'));
                                     }}
                                 >
                                     <OneOption

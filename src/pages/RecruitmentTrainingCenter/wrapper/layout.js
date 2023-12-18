@@ -12,7 +12,7 @@ export default function TraningCenterLayout() {
         { to: 'contract', text: 'Quản lý hợp đồng' },
         { to: 'post', text: 'Quản lý tuyển dụng' },
         { to: 'candidate', text: 'Quản lý ứng viên' },
-        { to: 'notifier', text: 'Quản lý thông báo' },
+        { to: 'statistical', text: 'Thống kê' },
     ];
 
     return (

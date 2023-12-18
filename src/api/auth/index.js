@@ -11,6 +11,7 @@ export const authApi = async ({ login }) => {
         return response.data;
     } catch (err) {
         console.error(err);
+        return Promise.reject(err);
     }
 };
 
@@ -24,15 +25,70 @@ export const authInfoApi = async (requestAuth) => {
     }
 };
 
-export const contractsApi = async (requestAuth) => {
+export const contractsApi = async (requestAuth, status) => {
     try {
-        const response = await requestAuth.get('/contract/by_enterprise_auth');
+        const response = await requestAuth.get('/contract/by_enterprise_auth', {
+            params: {
+                status: status,
+            },
+        });
 
         return response.data;
     } catch (err) {
         console.error(err);
     }
 };
+
+export const contractsApprovedApi = async (requestAuth, status) => {
+    try {
+        const response = await requestAuth.get('/contract/by_enterprise_auth', {
+            params: {
+                status: status,
+            },
+        });
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const updateContractApi = async (requestAuth, data) => {
+    try {
+        const response = await requestAuth.put(
+            '/contract/update',
+            JSON.stringify(data),
+        );
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const updateStatusContractApi = async (requestAuth, data) => {
+    try {
+        const response = await requestAuth.put(
+            '/contract/update_status',
+            JSON.stringify(data),
+        );
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const contractsAllApi = async (requestAuth) => {
+    try {
+        const response = await requestAuth.get('/contract/all');
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
 export const contractsByEnterpriseApi = async (requestAuth, enterpriseId) => {
     try {
         const response = await requestAuth.get('/contract/by_enterprise', {
@@ -64,6 +120,16 @@ export const positionsByContractApi = async (requestAuth, contractId) => {
 export const positionsByEnterpriseApi = async (requestAuth) => {
     try {
         const response = await requestAuth.get('/position/by_enterprise_auth');
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getContractApi = async (requestAuth) => {
+    try {
+        const response = await requestAuth.get('/contract/by_enterprise');
 
         return response.data;
     } catch (err) {
@@ -147,11 +213,107 @@ export const getContractDetailsByPostApplyApi = async (
     }
 };
 
-export const postsApi = async (requestAuth) => {
+export const getClassesByPostApplyAndStudentApi = async (
+    requestAuth,
+    postApplyId,
+    studentId,
+) => {
     try {
         const response = await requestAuth.get(
-            '/post-apply/by_enterprise_auth',
+            '/class/compatibility_post_student',
+            {
+                params: {
+                    postId: postApplyId,
+                    studentId: studentId,
+                },
+            },
         );
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const postsApi = async (requestAuth, params) => {
+    const tested = params?.tested;
+    const enterpriseId = params?.enterpriseId;
+    try {
+        const response = await requestAuth.get('/post-apply/by_enterprise', {
+            params: {
+                tested: tested,
+                enterpriseId: enterpriseId,
+            },
+        });
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getTestsByPostsApi = async (
+    requestAuth,
+    postApplyId,
+    studentId,
+) => {
+    try {
+        const response = await requestAuth.get('/test/by_post', {
+            params: {
+                postApplyId: postApplyId,
+                studentId: studentId,
+            },
+        });
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getTestsByIdsApi = async (requestAuth, ids) => {
+    try {
+        const response = await requestAuth.post(
+            '/test/ids',
+            JSON.stringify(ids),
+        );
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getTestsExamByIdsApi = async (requestAuth, ids) => {
+    try {
+        const response = await requestAuth.post(
+            '/test/ids',
+            JSON.stringify(ids),
+        );
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getTestDetailsByTestApi = async (requestAuth, testId) => {
+    try {
+        const response = await requestAuth.get('/test_details/by_test', {
+            params: {
+                testId: testId,
+            },
+        });
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const postsAllApi = async (requestAuth) => {
+    try {
+        const response = await requestAuth.get('/post-apply/all');
 
         return response.data;
     } catch (err) {
@@ -206,9 +368,36 @@ export const jobsByContractApi = async (requestAuth, contractId) => {
     }
 };
 
+export const jobsByPostApi = async (requestAuth, postApplyId) => {
+    try {
+        const response = await requestAuth.get('/apply/by_post', {
+            params: {
+                postApplyId: postApplyId,
+            },
+        });
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
 export const jobsByStudentApi = async (requestAuth) => {
     try {
         const response = await requestAuth.get('/post-apply/by_student_auth');
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const updateJobApi = async (requestAuth, data) => {
+    try {
+        const response = await requestAuth.put(
+            '/apply/update',
+            JSON.stringify(data),
+        );
 
         return response.data;
     } catch (err) {
@@ -240,6 +429,63 @@ export const getCourseByPositionApi = async (requestAuth, positionId) => {
                 },
             },
         );
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getClassByPositionApi = async (requestAuth, positionId) => {
+    try {
+        const response = await requestAuth.get(
+            '/class/compatibility_position',
+            {
+                params: {
+                    positionId: positionId,
+                },
+            },
+        );
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getTimeByPositionsApi = async (requestAuth, positionIds) => {
+    try {
+        const response = await requestAuth.post(
+            '/position/time_by_positions',
+            JSON.stringify(positionIds),
+        );
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getAmountByPositionsApi = async (requestAuth, positionIds) => {
+    try {
+        const response = await requestAuth.post(
+            '/position/amount_by_positions',
+            JSON.stringify(positionIds),
+        );
+
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getClassByStudentApi = async (requestAuth, studentId) => {
+    try {
+        const response = await requestAuth.get('/class/by_student', {
+            params: {
+                studentId: studentId,
+            },
+        });
 
         return response.data;
     } catch (err) {

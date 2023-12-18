@@ -3,6 +3,8 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
     value: {
         job: {},
+        classesPostStudent: [],
+        classesPosition: [],
         jobAll: [],
         contractDetails: {},
         apply: {},
@@ -18,6 +20,12 @@ const jobSlice = createSlice({
     reducers: {
         setJob: (state, action) => {
             state.value.job = action.payload;
+        },
+        setClassesPostStudent: (state, action) => {
+            state.value.classesPostStudent = action.payload;
+        },
+        setClassesPosition: (state, action) => {
+            state.value.classesPosition = action.payload;
         },
         setJobAll: (state, action) => {
             state.value.jobAll = action.payload;
@@ -39,6 +47,8 @@ const jobSlice = createSlice({
 
 export const {
     setJob,
+    setClassesPostStudent,
+    setClassesPosition,
     setJobAll,
     setContractDetails,
     setApply,

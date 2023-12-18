@@ -10,6 +10,7 @@ import postApplySlice from './postApplySlice';
 import postsSlice from './postsSlice';
 import jobsSlice from './jobsSlice';
 import jobSlice from './jobSlice';
+import testSlice from './testSlice';
 
 const saveAuthOnlyFilter = createFilter('auth', ['username', 'role']);
 
@@ -29,6 +30,7 @@ const rootReducer = combineReducers({
     posts: postsSlice,
     jobs: jobsSlice,
     job: jobSlice,
+    registerTest: testSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

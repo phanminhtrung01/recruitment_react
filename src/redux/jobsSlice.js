@@ -13,6 +13,10 @@ const initialState = {
             status: 'Đang chờ duyệt',
         },
         tabFilter: 'wait-approve',
+        levelFilter: {
+            key: 'level_1',
+            value: 'Xét duyệt đầu vào',
+        },
         jobsFilter: {
             mode: '',
             value: '',
@@ -45,7 +49,6 @@ const jobsSlice = createSlice({
                 jobsSelected: action.payload,
             };
         },
-
         setJobsSelectedFromEmpty: (state, action) => {
             state.value = {
                 ...state.value,
@@ -59,6 +62,12 @@ const jobsSlice = createSlice({
             state.value = {
                 ...state.value,
                 tabFilter: action.payload,
+            };
+        },
+        setLevelFilter: (state, action) => {
+            state.value = {
+                ...state.value,
+                levelFilter: action.payload,
             };
         },
         setCurrentJob: (state, action) => {
@@ -124,6 +133,7 @@ export const {
     updateJobs,
     setJobsSelected,
     setTabFilter,
+    setLevelFilter,
     setCurrentJob,
     resetCurrentJob,
     setCurrentPostNameJob,

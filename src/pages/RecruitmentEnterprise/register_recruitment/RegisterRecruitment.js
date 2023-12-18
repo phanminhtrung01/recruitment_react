@@ -80,7 +80,11 @@ import {
 } from '@mui/material';
 import { Toaster, toast } from 'sonner';
 import NotifierSnackbar from '../../../components/Notification/notifier-error';
-import { positionsByEnterpriseApi } from '../../../api/auth';
+import {
+    getClassByPositionApi,
+    positionsByEnterpriseApi,
+} from '../../../api/auth';
+import { resetAuth } from '../../../redux/authSlice';
 
 const Registration = () => {
     const navigate = useNavigate();
@@ -99,53 +103,9 @@ const Registration = () => {
     const [statusEndDate, setStatusEndDate] = useState('failure');
     const [statusJobs, setStatusJobs] = useState('failure');
 
-    const coursesData = {
-        'Lập trình web': [
-            {
-                name: 'Khóa học HTML/CSS cơ bản',
-                startDate: '2023-11-01',
-                endDate: '2023-11-30',
-            },
-            {
-                name: 'Khóa học JavaScript cơ bản',
-                startDate: '2023-12-01',
-                endDate: '2023-12-31',
-            },
-            {
-                name: 'Khóa học ReactJS',
-                startDate: '2024-01-01',
-                endDate: '2024-04-01',
-            },
-        ],
-        'Lập trình Python': [
-            {
-                name: 'Khóa học Python cơ bản',
-                startDate: '2023-11-01',
-                endDate: '2023-12-31',
-            },
-            {
-                name: 'Khóa học Python nâng cao',
-                startDate: '2024-01-01',
-                endDate: '2024-03-31',
-            },
-        ],
-        'Lập trình Java': [
-            {
-                name: 'Khóa học Java cơ bản',
-                startDate: '2023-11-01',
-                endDate: '2023-12-31',
-            },
-            {
-                name: 'Khóa học Java nâng cao',
-                startDate: '2024-01-01',
-                endDate: '2024-03-31',
-            },
-        ],
-    };
-
     const handleNavigateClick = (e, contract) => {
         e.preventDefault();
-        const { name, date, positions } = contract;
+        const { name, date, positions, oldApplicantsAllowed } = contract;
         const { startDate, endDate } = date;
         const positionsData = positions.map((pos) => ({
             positionId: pos.position.positionId,
@@ -159,6 +119,7 @@ const Registration = () => {
             effectiveDate: dayjs(startDate).format('DD/MM/YYYY'),
             terminationDate: dayjs(endDate).format('DD/MM/YYYY'),
             contractDetailDTOList: positionsData,
+            isOld: oldApplicantsAllowed,
         };
 
         const responsePromise = requestAuth.post(
@@ -172,6 +133,8 @@ const Registration = () => {
                 setTimeout(() => {
                     navigate('../contract', { replace: true });
                 }, 2500);
+
+                dispatch(resetContract());
                 return NotifierSnackbar({
                     title: 'Thành công ',
                     sub1: 'Đăng ký hợp đồng tuyển dụng thành công!',
@@ -182,9 +145,7 @@ const Registration = () => {
             },
             error: (e) => {
                 setStatusContract('failure');
-                console.log(e);
-
-                const responseErr = e?.response.data;
+                const responseErr = e?.response?.data;
                 const code = e.code;
                 let message;
                 if (code === 'ERR_NETWORK') {
@@ -215,91 +176,220 @@ const Registration = () => {
     };
 
     const handleTimeSubmit = ({ action }) => {
-        const result = timeRowRef.current.map((item) => {
-            const lastCheckedIndex = item.checkedTimeCourse.lastIndexOf(true);
-            if (lastCheckedIndex !== -1) {
-                return item.courseRows[lastCheckedIndex].endDate;
+        const result = timeRowRef.current.map((item, i) => {
+            const checkedIndex = item.value;
+            if (checkedIndex) {
+                return item.day;
             }
             return null;
         });
 
-        const latestItem = result.reduce((latest, item) => {
-            if (item === null) return latest;
-            const itemDate = new Date(item);
-            const latestDate = latest ? new Date(latest) : null;
-            return latestDate === null || itemDate > latestDate ? item : latest;
-        }, tomorrow);
+        function isValidDate(dateString) {
+            let [day, month, year] = dateString.split('/');
+            let timestamp = Date.parse(`${month}/${day}/${year}`);
 
-        if (action) {
-            testRef.current?.closeCollapse();
+            return !isNaN(timestamp);
         }
 
-        setEndDateContract(dayjs(latestItem));
-    };
+        let timestamps = result.map((date) => {
+            if (date) {
+                let [day, month, year] = date.split('/');
+                return Date.parse(`${month}/${day}/${year}`);
+            } else {
+                return -Infinity;
+            }
+        });
 
-    const timeRowRef = useRef([]);
-    const setTimeRowRef = (data) => {
-        const index = timeRowRef.current.findIndex(
-            (row) => row.position === data.position,
-        );
-        if (index === -1) {
-            timeRowRef.current = [...timeRowRef.current, data];
-        } else {
-            timeRowRef.current = timeRowRef.current.map((row, i) =>
-                i === index ? data : row,
-            );
-        }
-    };
+        let maxTimestamp = Math.max.apply(null, timestamps);
 
-    const updateTimeRowRef = (data) => {
-        if (timeRowRef.current.length > data.length) {
-            timeRowRef.current = timeRowRef.current.filter((x) =>
-                data.map((e) => e.position).includes(x.position),
-            );
+        let maxDate = new Date(maxTimestamp).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        });
+
+        console.log(maxDate);
+        if (!dayjs(maxDate, 'DD/MM/YYYY').isValid()) {
+            maxDate = tomorrow;
         }
+
+        setEndDateContract(dayjs(maxDate, 'DD/MM/YYYY'));
     };
 
     const Transition = React.forwardRef(function Transition(props, ref) {
         return <Slide direction="up" ref={ref} {...props} />;
     });
 
+    const timeRowRef = useRef([]);
+
     const Row = React.forwardRef((props, ref) => {
         const { row } = props;
 
         const { position, amount } = row;
-        const [checkedTimeCourse, setCheckedTimeCourse] = useState(
-            Array(coursesData[position.positionId]?.length).fill(true),
-        );
+        const [classes, setClasses] = useState([]);
 
-        const handleCheck = (index) => {
-            let newChecked = [...checkedTimeCourse]; // Tạo một bản sao của mảng hiện tại
-            newChecked[index] = !newChecked[index]; // Đảo trạng thái của checkbox được nhấp
+        const updateTimeRef = (checkedTimeCourse) => {
+            const times = [...timeRowRef.current];
 
-            // Nếu checkbox cuối cùng được chọn, chọn tất cả các checkbox
-            if (index === newChecked.length - 1 && newChecked[index]) {
-                newChecked = newChecked.map(() => true);
-            }
+            const newTimes = times.map((time) => {
+                const keys = checkedTimeCourse.map((time) => time.key);
+                const index = keys.indexOf(time.key);
+                return {
+                    ...time,
+                    value: checkedTimeCourse[index]?.value ?? time.value,
+                };
+            });
 
-            // Nếu một checkbox không phải cuối cùng được chọn, bỏ chọn tất cả các checkbox phía sau
-            if (index !== newChecked.length - 1 && newChecked[index]) {
-                for (let i = 0; i < newChecked.length; i++) {
-                    if (i > index) {
-                        newChecked[i] = false;
-                    } else {
-                        newChecked[i] = true;
+            timeRowRef.current = newTimes;
+        };
+
+        const addTimeRef = (checkedTimeCourse) => {
+            const times = [...timeRowRef.current];
+            checkedTimeCourse.forEach((element, index) => {
+                if (
+                    times[index] === undefined ||
+                    times[index].key !== element.key
+                ) {
+                    times.push(element);
+                }
+            });
+
+            timeRowRef.current = times;
+        };
+
+        const RenderPositions = (props) => {
+            const { classes } = props;
+            const [checkedTimeCourse, setCheckedTimeCourse] = useState([]);
+
+            const handleCheck = (index) => {
+                let newChecked = [...checkedTimeCourse];
+                newChecked[index].value = !newChecked[index].value;
+
+                if (
+                    index === newChecked.length - 1 &&
+                    newChecked[index].value
+                ) {
+                    newChecked = newChecked.map((check) => {
+                        return { ...check, key: check.key, value: true };
+                    });
+                }
+
+                if (
+                    index !== newChecked.length - 1 &&
+                    newChecked[index].value
+                ) {
+                    for (let i = 0; i < newChecked.length; i++) {
+                        if (i > index) {
+                            newChecked[i].value = false;
+                        } else {
+                            newChecked[i].value = true;
+                        }
                     }
                 }
-            }
 
-            // Nếu một checkbox không phải cuối cùng được bỏ chọn, bỏ chọn tất cả các checkbox phía sau
-            if (index !== newChecked.length - 1 && !newChecked[index]) {
-                for (let i = index + 1; i < newChecked.length; i++) {
-                    newChecked[i] = false;
+                if (index !== newChecked.length - 1 && !newChecked[index]) {
+                    for (let i = index + 1; i < newChecked.length; i++) {
+                        newChecked[i].value = false;
+                    }
                 }
-            }
 
-            setCheckedTimeCourse(newChecked);
+                setCheckedTimeCourse(newChecked);
+            };
+
+            useEffect(() => {
+                updateTimeRef(checkedTimeCourse);
+            }, [checkedTimeCourse]);
+
+            useEffect(() => {
+                const checked = classes.map((classR) => {
+                    return {
+                        key: classR.classId,
+                        value: true,
+                        day: classR.endDate,
+                    };
+                });
+                setCheckedTimeCourse(checked);
+                addTimeRef(checked);
+            }, [classes]);
+
+            if (classes.length === 0) {
+                return (
+                    <TableRow key={0}>
+                        <TableCell component="th" scope="row">
+                            Không có lớp học nào!
+                        </TableCell>
+                    </TableRow>
+                );
+            } else {
+                return classes.map((courseRow, index) => {
+                    return (
+                        <TableRow key={index}>
+                            <TableCell component="th" scope="row">
+                                {courseRow.name}
+                            </TableCell>
+                            <TableCell>{courseRow.startDate}</TableCell>
+                            <TableCell align="right">
+                                {courseRow.endDate}
+                            </TableCell>
+                            <TableCell align="right">
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        <Checkbox
+                                            title="Tự động cập nhật theo khóa học"
+                                            color="success"
+                                            checked={
+                                                checkedTimeCourse[index]
+                                                    ?.value ?? true
+                                            }
+                                            onChange={() => handleCheck(index)}
+                                        />
+                                    </div>
+                                    <span
+                                        style={{
+                                            fontSize: '13px',
+                                            textAlign: 'center',
+                                        }}
+                                    >
+                                        Theo thời gian khóa học
+                                        <Tippy content="Theo khoa hoc nha">
+                                            <span> (*)</span>
+                                        </Tippy>
+                                    </span>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    );
+                });
+            }
         };
+
+        const getClassByPosition = async (positionId) => {
+            try {
+                const response = await getClassByPositionApi(
+                    requestAuth,
+                    positionId,
+                );
+
+                const code = response.status;
+                const data = response.data;
+                if (code === 200) {
+                    setClasses(data);
+                }
+            } catch (error) {
+                console.log('GET_CLASS_ERROR');
+            }
+        };
+
         const [open, setOpen] = React.useState(false);
 
         useImperativeHandle(ref, () => ({
@@ -307,6 +397,10 @@ const Registration = () => {
                 setOpen(!open);
             },
         }));
+
+        useEffect(() => {
+            getClassByPosition(position.positionId);
+        }, [position]);
 
         return (
             <React.Fragment>
@@ -327,7 +421,7 @@ const Registration = () => {
                     <TableCell component="th" scope="row">
                         {position.name}
                     </TableCell>
-                    <TableCell align="right">{row.amount}</TableCell>
+                    <TableCell align="right">{amount}</TableCell>
                 </TableRow>
                 <TableRow>
                     <TableCell
@@ -358,89 +452,7 @@ const Registration = () => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {coursesData[position.positionId]?.map(
-                                            (courseRow, index) => {
-                                                // const position = row.position;
-                                                const courseRows =
-                                                    coursesData[position];
-                                                const timeRowNew = {
-                                                    position,
-                                                    checkedTimeCourse,
-                                                    courseRows,
-                                                };
-                                                setTimeRowRef(timeRowNew);
-                                                return (
-                                                    <TableRow key={index}>
-                                                        <TableCell
-                                                            component="th"
-                                                            scope="row"
-                                                        >
-                                                            {courseRow.name}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {
-                                                                courseRow.startDate
-                                                            }
-                                                        </TableCell>
-                                                        <TableCell align="right">
-                                                            {courseRow.endDate}
-                                                        </TableCell>
-                                                        <TableCell align="right">
-                                                            <div
-                                                                style={{
-                                                                    display:
-                                                                        'flex',
-                                                                    flexDirection:
-                                                                        'column',
-                                                                }}
-                                                            >
-                                                                <div
-                                                                    style={{
-                                                                        display:
-                                                                            'flex',
-                                                                        justifyContent:
-                                                                            'center',
-                                                                    }}
-                                                                >
-                                                                    <Checkbox
-                                                                        title="Tự động cập nhật theo khóa học"
-                                                                        color="success"
-                                                                        checked={
-                                                                            checkedTimeCourse[
-                                                                                index
-                                                                            ]
-                                                                        }
-                                                                        onChange={() =>
-                                                                            handleCheck(
-                                                                                index,
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                                <span
-                                                                    style={{
-                                                                        fontSize:
-                                                                            '13px',
-                                                                        textAlign:
-                                                                            'center',
-                                                                    }}
-                                                                >
-                                                                    Theo thời
-                                                                    gian khóa
-                                                                    học
-                                                                    <Tippy content="Theo khoa hoc nha">
-                                                                        <span>
-                                                                            {' '}
-                                                                            (*)
-                                                                        </span>
-                                                                    </Tippy>
-                                                                </span>
-                                                            </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            },
-                                        )}
+                                        <RenderPositions classes={classes} />
                                     </TableBody>
                                 </Table>
                             </Box>
@@ -480,7 +492,6 @@ const Registration = () => {
         }, [position]);
 
         useEffect(() => {
-            // console.log(positions, options);
             if (openSelect) {
                 const getPosition = async () => {
                     try {
@@ -492,9 +503,7 @@ const Registration = () => {
 
                         if (status === 200) {
                             const data = response.data;
-                            console.log(data);
                             filter(data);
-                            // setOptions(data);
                         }
                     } catch (e) {
                         console.log('POSITION_ERROR');
@@ -507,7 +516,7 @@ const Registration = () => {
 
                 setFetching(false);
             }
-            console.log(openSelect);
+            //console.log(openSelect);
         }, [openSelect]);
 
         const filter = useCallback(
@@ -662,8 +671,6 @@ const Registration = () => {
             positionRef.current?.setNull(null);
             amountRef.current?.setNull(0);
 
-            updateTimeRowRef(positionR);
-            handleTimeSubmit({ action: false });
             if (positionR.length === 0) {
                 setStatusJobs('failure');
             } else {
@@ -773,14 +780,10 @@ const Registration = () => {
         const { info } = useSelector((state) => state.infoUser?.value);
         const nameTrainingCenter = 'Trung tâm đào tạo BN';
         const nameEnterprise = info.name;
-        const time = dayjs().format('DD-MM-YYYY_HH:mm');
+        const time = dayjs().format('DD-MM-YYYY_HH:mm:ss');
         const [contractName, setContractName] = useState(
             nameTrainingCenter + '_' + nameEnterprise + '_' + time,
         );
-
-        // useEffect(() => {
-        //     setContractName(nameContract);
-        // }, [nameContract]);
 
         const handleContractNameChange = (event) => {
             setContractName(event.target.value);
@@ -1188,10 +1191,22 @@ const Registration = () => {
 
         useEffect(() => {
             dispatch(setName(contractName));
-            if (contractName.length === 0) {
+            if (contractName?.length === 0) {
                 setStatusContract('failure');
+                setContractName(
+                    nameTrainingCenter + '_' + nameEnterprise + '_' + time,
+                );
+                dispatch(
+                    setName(
+                        nameTrainingCenter + '_' + nameEnterprise + '_' + time,
+                    ),
+                );
             }
         }, [contractName]);
+
+        // useEffect(() => {
+        //     setContractName(nameContract);
+        // }, [nameContract]);
 
         return (
             <div className={`registration-review ${statusContract}`}>
@@ -1269,7 +1284,7 @@ const Registration = () => {
 
                     <div className="review-time">
                         <div className="time-box">
-                            <h5>Ngày bắt đầu</h5>
+                            <h5>Ngày bắt đầu dự kiện</h5>
                             <TextField
                                 disabled={true}
                                 onChange={handleStartDateChange}
@@ -1282,7 +1297,7 @@ const Registration = () => {
                             />
                         </div>
                         <div className="time-box">
-                            <h5>Ngày kết thúc</h5>
+                            <h5>Ngày kết thúc dự kiện</h5>
                             <TextField
                                 disabled={true}
                                 onChange={handleEndDateChange}
@@ -1345,6 +1360,10 @@ const Registration = () => {
 
         const positionsR = useSelector(
             (state) => state.contract?.value?.positions,
+        );
+
+        const oldApplicantsAllowed = useSelector(
+            (state) => state.contract?.value?.oldApplicantsAllowed,
         );
 
         function ContractTerm() {
@@ -1556,9 +1575,6 @@ const Registration = () => {
             if (!allowTime) {
                 timeRowRef.current = [];
             }
-            // handleTimeSubmit({
-            //     action: 'false',
-            // });
         }, [allowTime]);
 
         return (
@@ -1640,7 +1656,7 @@ const Registration = () => {
                                                     </TableHead>
                                                     <TableBody>
                                                         {positionsR.map(
-                                                            (row) => (
+                                                            (row, i) => (
                                                                 <Row
                                                                     ref={
                                                                         testRef
@@ -1648,7 +1664,8 @@ const Registration = () => {
                                                                     key={
                                                                         row
                                                                             .position
-                                                                            ?.positionId
+                                                                            ?.positionId ??
+                                                                        i
                                                                     }
                                                                     row={row}
                                                                 />
@@ -1688,6 +1705,7 @@ const Registration = () => {
                                     onChange={(e, value) =>
                                         dispatch(setOldApplicantsAllowed(value))
                                     }
+                                    checked={oldApplicantsAllowed}
                                 />
                                 <span style={{ fontSize: '13px' }}>
                                     Chấp nhận các ứng viên đã học

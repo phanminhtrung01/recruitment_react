@@ -1,19 +1,17 @@
 import { useLocation, Navigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-const RequireAuthEnterprise = () => {
-    const auth = useSelector((state) => state.auth.value);
+const RequireAuthStudent = () => {
     const location = useLocation();
 
-    return auth?.username ? (
+    const auth = useSelector((state) => state.auth.value);
+    const { roleDB, roleUI } = auth;
+    console.log('Training Center: ' + auth?.roleDB);
+    return roleUI === 'STUDENT' && roleDB === 'STUDENT' ? (
         <Outlet />
     ) : (
-        <Navigate
-            to={auth?.role === 'STUDENT' ? '/auth/login/student' : ''}
-            state={{ from: location }}
-            replace
-        />
+        <Navigate to="/auth/login/student" state={{ from: location }} replace />
     );
 };
 
-export default RequireAuthEnterprise;
+export default RequireAuthStudent;

@@ -159,6 +159,15 @@ const contractSlice = createSlice({
                 },
             };
         },
+        setNameContract: (state, action) => {
+            return {
+                ...state,
+                value: {
+                    ...state.value,
+                    name: action.payload,
+                },
+            };
+        },
         resetContract: (state) => {
             state.value = initialState.value;
         },
